@@ -76,24 +76,26 @@ void swift_endAccess(void *buffer)
 
 // String function stubs to avoid ROM conflicts
 // These provide RAM-based implementations instead of ROM functions
+// Using strong symbols to override any ROM versions
 
-size_t strlen(const char *s)
+// Strong symbol implementations that will override ROM functions
+size_t __attribute__((used)) strlen(const char *s)
 {
     size_t len = 0;
-    while (*s++) {
+    while (s[len]) {
         len++;
     }
     return len;
 }
 
-char *strcpy(char *dest, const char *src)
+char * __attribute__((used)) strcpy(char *dest, const char *src)
 {
     char *d = dest;
     while ((*d++ = *src++));
     return dest;
 }
 
-int strcmp(const char *s1, const char *s2)
+int __attribute__((used)) strcmp(const char *s1, const char *s2)
 {
     while (*s1 && (*s1 == *s2)) {
         s1++;
@@ -102,10 +104,10 @@ int strcmp(const char *s1, const char *s2)
     return *(unsigned char*)s1 - *(unsigned char*)s2;
 }
 
-char *strncpy(char *dest, const char *src, size_t n)
+char * __attribute__((used)) strncpy(char *dest, const char *src, size_t n)
 {
+    if (n == 0) return dest;
     size_t i;
-    char *d = dest;
     
     for (i = 0; i < n && src[i] != '\0'; i++) {
         dest[i] = src[i];
@@ -113,7 +115,26 @@ char *strncpy(char *dest, const char *src, size_t n)
     for (; i < n; i++) {
         dest[i] = '\0';
     }
-    return d;
+    return dest;
+}
+
+// Additional string functions that might be called
+char * __attribute__((used)) strcat(char *dest, const char *src)
+{
+    char *d = dest;
+    while (*d) d++;  // Find end of dest
+    while ((*d++ = *src++));
+    return dest;
+}
+
+int __attribute__((used)) strncmp(const char *s1, const char *s2, size_t n)
+{
+    if (n == 0) return 0;
+    while (n-- && *s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
+    }
+    return n ? *(unsigned char*)s1 - *(unsigned char*)s2 : 0;
 }
 
 // Wrapper functions for --wrap linker flags
@@ -137,4 +158,14 @@ int __wrap_strcmp(const char *s1, const char *s2)
 char *__wrap_strncpy(char *dest, const char *src, size_t n)
 {
     return strncpy(dest, src, n);
+}
+
+char *__wrap_strcat(char *dest, const char *src)
+{
+    return strcat(dest, src);
+}
+
+int __wrap_strncmp(const char *s1, const char *s2, size_t n)
+{
+    return strncmp(s1, s2, n);
 }

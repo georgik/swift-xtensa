@@ -20,9 +20,18 @@ target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,strlen")
 target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,strcpy")
 target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,strcmp")
 target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,strncpy")
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,strcat")
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,strncmp")
 
 # Override ROM functions with our implementations
 target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,--wrap=strlen")
 target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,--wrap=strcpy")
 target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,--wrap=strcmp")
 target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,--wrap=strncpy")
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,--wrap=strcat")
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,--wrap=strncmp")
+
+# Add stronger symbol overrides to avoid ROM conflicts
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-defsym=__real_strlen=strlen")
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-defsym=__real_strcpy=strcpy")
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-defsym=__real_strcmp=strcmp")
