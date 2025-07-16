@@ -1,2 +1,6 @@
 build/
 install/
+*.o
+*.ll
+*.s
+
