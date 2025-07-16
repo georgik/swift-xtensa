@@ -14,3 +14,15 @@ target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,__atomic_store_4")
 target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,__atomic_fetch_add_4")
 target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,__atomic_fetch_sub_4")
 target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,__atomic_compare_exchange_4")
+
+# Force linker to use our string functions instead of ROM versions
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,strlen")
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,strcpy")
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,strcmp")
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,-u,strncpy")
+
+# Override ROM functions with our implementations
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,--wrap=strlen")
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,--wrap=strcpy")
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,--wrap=strcmp")
+target_link_options(${COMPONENT_LIB} INTERFACE "-Wl,--wrap=strncpy")

@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -56,4 +57,84 @@ bool __atomic_compare_exchange_4(volatile void *ptr, void *expected, unsigned in
         portENABLE_INTERRUPTS();
         return false;
     }
+}
+
+// Swift runtime stubs for ESP32-S3
+// These provide minimal implementations of Swift runtime functions
+
+void swift_beginAccess(void *pointer, void *buffer, unsigned flags, void *pc)
+{
+    // Minimal implementation - just return for now
+    // In full Swift runtime, this would handle exclusive access
+}
+
+void swift_endAccess(void *buffer)
+{
+    // Minimal implementation - just return for now
+    // In full Swift runtime, this would end exclusive access
+}
+
+// String function stubs to avoid ROM conflicts
+// These provide RAM-based implementations instead of ROM functions
+
+size_t strlen(const char *s)
+{
+    size_t len = 0;
+    while (*s++) {
+        len++;
+    }
+    return len;
+}
+
+char *strcpy(char *dest, const char *src)
+{
+    char *d = dest;
+    while ((*d++ = *src++));
+    return dest;
+}
+
+int strcmp(const char *s1, const char *s2)
+{
+    while (*s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
+    }
+    return *(unsigned char*)s1 - *(unsigned char*)s2;
+}
+
+char *strncpy(char *dest, const char *src, size_t n)
+{
+    size_t i;
+    char *d = dest;
+    
+    for (i = 0; i < n && src[i] != '\0'; i++) {
+        dest[i] = src[i];
+    }
+    for (; i < n; i++) {
+        dest[i] = '\0';
+    }
+    return d;
+}
+
+// Wrapper functions for --wrap linker flags
+// These redirect calls to our implementations
+
+size_t __wrap_strlen(const char *s)
+{
+    return strlen(s);
+}
+
+char *__wrap_strcpy(char *dest, const char *src)
+{
+    return strcpy(dest, src);
+}
+
+int __wrap_strcmp(const char *s1, const char *s2)
+{
+    return strcmp(s1, s2);
+}
+
+char *__wrap_strncpy(char *dest, const char *src, size_t n)
+{
+    return strncpy(dest, src, n);
 }
