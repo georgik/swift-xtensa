@@ -59,17 +59,6 @@ else
     cd - > /dev/null
 fi
 
-# Clone ESP Rust repository (for reference)
-if [ ! -d "../rust" ]; then
-    log "Cloning ESP Rust repository (for reference)..."
-    git clone https://github.com/esp-rs/rust.git ../rust
-else
-    log "ESP Rust repository already exists, updating..."
-    cd ../rust
-    git pull origin esp-1.87.0.0
-    cd - > /dev/null
-fi
-
 log "Repository setup completed!"
 log ""
 log "Directory structure:"
