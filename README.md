@@ -10,6 +10,7 @@ This project demonstrates running Swift code on the ESP32-S3 microcontroller usi
 - **Basic arithmetic**: Addition, multiplication, subtraction, bit shifting
 - **Complex algorithms**: Binary exponentiation (power function)
 - **Iterative algorithms**: Fibonacci sequence computation
+- **String operations**: Character access, string length calculation
 - **Control flow**: Loops, conditionals, function calls
 - **Edge cases**: Proper handling of boundary conditions
 
@@ -335,6 +336,22 @@ public func swiftFibonacci(_ n: UInt32) -> UInt32 {
     }
     
     return b
+}
+
+// String operations: Character access
+@_cdecl("swift_char_test")
+public func swiftCharTest(_ name: UnsafePointer<CChar>) -> CChar {
+    return name[0]  // Return first character
+}
+
+// String operations: Length calculation
+@_cdecl("swift_string_length")
+public func swiftStringLength(_ name: UnsafePointer<CChar>) -> UInt32 {
+    var len: UInt32 = 0
+    while name[Int(len)] != 0 {
+        len = len + 1
+    }
+    return len
 }
 ```
 
