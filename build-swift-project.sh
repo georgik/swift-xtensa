@@ -37,9 +37,9 @@ fi
 echo -e "${YELLOW}📁 Working directory: $ESP_PROJECT_DIR${NC}"
 cd "$ESP_PROJECT_DIR"
 
-# Step 1: Compile Swift to LLVM IR (using system Swift)
+# Step 1: Compile Swift to LLVM IR (using system Swift with 32-bit target)
 echo -e "${BLUE}🔨 Step 1: Compiling Swift to LLVM IR...${NC}"
-swiftc -emit-ir test_simple.swift -o test_simple.ll
+swiftc -target armv7-none-none-eabi -enable-experimental-feature Embedded -wmo -parse-as-library -emit-ir -Ounchecked -remove-runtime-asserts -assert-config Unchecked test_simple.swift -o test_simple.ll
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Swift compilation successful${NC}"
 else

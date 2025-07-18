@@ -1,6 +1,6 @@
 # Swift on ESP32-S3
 
-This project demonstrates running Swift code on the ESP32-S3 microcontroller using a **corrected two-stage compilation approach**. Swift code is compiled to LLVM IR using the host Swift compiler, then **patched for Xtensa compatibility** and cross-compiled to Xtensa assembly using the ESP LLVM toolchain.
+This project demonstrates running Swift code on the ESP32-S3 microcontroller using a **32-bit ARM-to-Xtensa cross-compilation approach**. Swift code is compiled to LLVM IR targeting 32-bit ARM (armv7-none-none-eabi), then **patched for Xtensa compatibility** and cross-compiled to Xtensa assembly using the ESP LLVM toolchain.
 
 ## 🎯 Project Status
 
