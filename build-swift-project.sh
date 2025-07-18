@@ -37,7 +37,7 @@ fi
 echo -e "${YELLOW}📁 Working directory: $ESP_PROJECT_DIR${NC}"
 cd "$ESP_PROJECT_DIR"
 
-# Step 1: Compile Swift to LLVM IR
+# Step 1: Compile Swift to LLVM IR (using system Swift)
 echo -e "${BLUE}🔨 Step 1: Compiling Swift to LLVM IR...${NC}"
 swiftc -emit-ir test_simple.swift -o test_simple.ll
 if [ $? -eq 0 ]; then
@@ -47,15 +47,32 @@ else
     exit 1
 fi
 
-# Step 2: Clean LLVM IR metadata
-echo -e "${BLUE}🧹 Step 2: Cleaning LLVM IR metadata...${NC}"
-sed '/!llvm.linker.options/d' test_simple.ll > test_simple_clean.ll
-sed '/^!1[2-9] = /d' test_simple_clean.ll > test_simple_final.ll
-echo -e "${GREEN}✅ LLVM IR cleaned${NC}"
+# Step 2: Fix LLVM IR for Xtensa (correct target triple and data layout)
+echo -e "${BLUE}🔧 Step 2: Fixing LLVM IR for Xtensa target...${NC}"
+cp test_simple.ll test_simple_xtensa.ll
+
+# Fix target triple and data layout
+sed -i '' 's/target datalayout = ".*"/target datalayout = "e-m:e-p:32:32-i64:64-i128:128-n32"/' test_simple_xtensa.ll
+sed -i '' 's/target triple = ".*"/target triple = "xtensa-esp-elf"/' test_simple_xtensa.ll
+
+# Fix target CPU in attributes
+sed -i '' 's/"target-cpu"=".*"/"target-cpu"="esp32s3"/' test_simple_xtensa.ll
+
+# Remove ARM-specific target features
+sed -i '' 's/"target-features"="[^"]*"//' test_simple_xtensa.ll
+
+# Remove problematic linker options and fix metadata
+sed -i '' '/!llvm.linker.options/d' test_simple_xtensa.ll
+sed -i '' '/SDK Version/d' test_simple_xtensa.ll
+sed -i '' '/Objective-C/d' test_simple_xtensa.ll
+sed -i '' '/PIC Level/d' test_simple_xtensa.ll
+sed -i '' '/uwtable/d' test_simple_xtensa.ll
+sed -i '' '/frame-pointer/d' test_simple_xtensa.ll
+echo -e "${GREEN}✅ LLVM IR corrected for Xtensa${NC}"
 
 # Step 3: Compile LLVM IR to Xtensa assembly
 echo -e "${BLUE}🔧 Step 3: Compiling LLVM IR to Xtensa assembly...${NC}"
-"$LLVM_BIN/llc" -march=xtensa -mcpu=esp32s3 test_simple_final.ll -o test_simple.s
+"$LLVM_BIN/llc" -march=xtensa -mcpu=esp32s3 test_simple_xtensa.ll -o test_simple_xtensa.s
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Xtensa assembly generation successful${NC}"
 else
@@ -65,7 +82,7 @@ fi
 
 # Step 4: Assemble to object file
 echo -e "${BLUE}🔗 Step 4: Assembling to object file...${NC}"
-"$LLVM_BIN/llvm-mc" -triple=xtensa-esp-elf -filetype=obj test_simple.s -o test_simple.o
+"$LLVM_BIN/llvm-mc" -triple=xtensa-esp-elf -filetype=obj test_simple_xtensa.s -o test_simple_xtensa.o
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Object file generation successful${NC}"
 else
@@ -90,13 +107,13 @@ echo "=================================================="
 echo -e "${BLUE}📊 Build Summary:${NC}"
 echo "  Swift source:     test_simple.swift"
 echo "  LLVM IR:          test_simple.ll"
-echo "  Cleaned IR:       test_simple_final.ll"
-echo "  Xtensa assembly:  test_simple.s"
-echo "  Object file:      test_simple.o"
+echo "  Corrected IR:     test_simple_xtensa.ll"
+echo "  Xtensa assembly:  test_simple_xtensa.s"
+echo "  Object file:      test_simple_xtensa.o"
 echo "  ESP32-S3 binary:  build/swift_esp32s3_test.bin"
 echo ""
 echo -e "${YELLOW}📦 Generated files:${NC}"
-ls -la test_simple.*
+ls -la test_simple*
 echo ""
 echo -e "${YELLOW}💾 Binary size:${NC}"
 ls -lh build/swift_esp32s3_test.bin
@@ -105,7 +122,7 @@ echo -e "${BLUE}🚀 To flash to ESP32-S3:${NC}"
 echo "  idf.py flash monitor"
 echo ""
 echo -e "${BLUE}🔍 To view assembly:${NC}"
-echo "  less test_simple.s"
+echo "  less test_simple_xtensa.s"
 echo ""
 echo -e "${BLUE}🔍 To view LLVM IR:${NC}"
-echo "  less test_simple_final.ll"
+echo "  less test_simple_xtensa.ll"

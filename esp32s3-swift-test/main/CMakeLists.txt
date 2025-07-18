@@ -2,8 +2,8 @@ idf_component_register(SRCS "main.c" "atomic_stubs.c"
                     INCLUDE_DIRS "."
                     PRIV_REQUIRES "esp_hw_support")
 
-# Add the Swift object file
-target_link_libraries(${COMPONENT_LIB} INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../test_simple.o")
+# Add the Swift object file (corrected for Xtensa)
+target_link_libraries(${COMPONENT_LIB} INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../test_simple_xtensa.o")
 
 # Add linker script fragment for Swift sections
 target_link_options(${COMPONENT_LIB} INTERFACE "-T" "${CMAKE_CURRENT_SOURCE_DIR}/swift_sections.ld")

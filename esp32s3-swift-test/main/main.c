@@ -4,11 +4,11 @@
 #include "esp_log.h"
 
 // Declaration of Swift functions
-extern void swift_compute_demo(void);
-extern uint32_t swift_simple_addition(uint32_t a, uint32_t b);
+extern uint32_t swift_add(uint32_t a, uint32_t b);
 extern uint32_t swift_multiply(uint32_t a, uint32_t b);
-extern uint32_t swift_get_addition_result(void);
-extern uint32_t swift_get_multiply_result(void);
+extern uint32_t swift_subtract(uint32_t a, uint32_t b);
+extern uint32_t swift_shift(uint32_t a, uint32_t b);
+extern uint32_t swift_compute(uint32_t x, uint32_t y);
 
 static const char* TAG = "swift_test";
 
@@ -35,25 +35,25 @@ void app_main(void) {
     ESP_LOGI(TAG, "");
     ESP_LOGI(TAG, "Now testing Swift function calls:");
     
-    // Test direct Swift function calls
-    ESP_LOGI(TAG, "Calling Swift functions directly...");
+    // Test individual Swift functions
+    ESP_LOGI(TAG, "Testing individual Swift functions...");
     
-    uint32_t swift_add_result = swift_simple_addition(7, 8);
+    uint32_t swift_add_result = swift_add(7, 8);
     ESP_LOGI(TAG, "Swift addition: 7 + 8 = %u", swift_add_result);
     
     uint32_t swift_mul_result = swift_multiply(4, 6);
     ESP_LOGI(TAG, "Swift multiplication: 4 * 6 = %u", swift_mul_result);
     
-    // Test Swift demo function that stores results
-    ESP_LOGI(TAG, "Calling Swift compute demo...");
-    swift_compute_demo();
+    uint32_t swift_sub_result = swift_subtract(10, 3);
+    ESP_LOGI(TAG, "Swift subtraction: 10 - 3 = %u", swift_sub_result);
     
-    // Get stored results
-    uint32_t stored_add = swift_get_addition_result();
-    uint32_t stored_mul = swift_get_multiply_result();
+    uint32_t swift_shift_result = swift_shift(32, 2);
+    ESP_LOGI(TAG, "Swift shift: 32 >> 2 = %u", swift_shift_result);
     
-    ESP_LOGI(TAG, "Swift stored addition result: %u", stored_add);
-    ESP_LOGI(TAG, "Swift stored multiplication result: %u", stored_mul);
+    // Test combined Swift function
+    ESP_LOGI(TAG, "Testing combined Swift computation...");
+    uint32_t swift_compute_result = swift_compute(5, 3);
+    ESP_LOGI(TAG, "Swift compute(5, 3): (5+3) + (5*3) = %u", swift_compute_result);
     
     // Verify results
     bool all_passed = true;
@@ -68,13 +68,18 @@ void app_main(void) {
         all_passed = false;
     }
     
-    if (stored_add != 15) {
-        ESP_LOGE(TAG, "ERROR: Swift stored addition failed! Expected 15, got %u", stored_add);
+    if (swift_sub_result != 7) {
+        ESP_LOGE(TAG, "ERROR: Swift subtraction failed! Expected 7, got %u", swift_sub_result);
         all_passed = false;
     }
     
-    if (stored_mul != 12) {
-        ESP_LOGE(TAG, "ERROR: Swift stored multiplication failed! Expected 12, got %u", stored_mul);
+    if (swift_shift_result != 8) {  // 32 >> 2 = 8
+        ESP_LOGE(TAG, "ERROR: Swift shift failed! Expected 8, got %u", swift_shift_result);
+        all_passed = false;
+    }
+    
+    if (swift_compute_result != 23) {  // (5+3) + (5*3) = 8 + 15 = 23
+        ESP_LOGE(TAG, "ERROR: Swift compute failed! Expected 23, got %u", swift_compute_result);
         all_passed = false;
     }
     

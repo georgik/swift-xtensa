@@ -1,37 +1,35 @@
 // Simple Swift computation for ESP32-S3
 // Minimal Swift code without Foundation to avoid runtime complexity
+// Pure functions without global state to minimize runtime dependencies
 
-// Global variables to store computation results
-var additionResult: UInt32 = 0
-var multiplyResult: UInt32 = 0
-
-// Simple addition function that matches our C implementation
-@_cdecl("swift_simple_addition")
-public func swiftSimpleAddition(_ a: UInt32, _ b: UInt32) -> UInt32 {
-    return a &+ b  // Use overflow-safe addition
+// Simple addition function
+@_cdecl("swift_add")
+public func swiftAdd(_ a: UInt32, _ b: UInt32) -> UInt32 {
+    return a + b
 }
 
 // Simple multiplication function
 @_cdecl("swift_multiply")
 public func swiftMultiply(_ a: UInt32, _ b: UInt32) -> UInt32 {
-    return a &* b  // Use overflow-safe multiplication
+    return a * b
 }
 
-// Main computation demo function
-@_cdecl("swift_compute_demo")
-public func swiftComputeDemo() {
-    // Perform basic computations and store results
-    additionResult = swiftSimpleAddition(5, 10)
-    multiplyResult = swiftMultiply(3, 4)
+// Simple subtraction function
+@_cdecl("swift_subtract")
+public func swiftSubtract(_ a: UInt32, _ b: UInt32) -> UInt32 {
+    return a - b
 }
 
-// Getter functions for C to access results
-@_cdecl("swift_get_addition_result")
-public func swiftGetAdditionResult() -> UInt32 {
-    return additionResult
+// Simple shift function (safer than division)
+@_cdecl("swift_shift")
+public func swiftShift(_ a: UInt32, _ b: UInt32) -> UInt32 {
+    return a >> (b & 31)  // Shift right by b positions (safe)
 }
 
-@_cdecl("swift_get_multiply_result")
-public func swiftGetMultiplyResult() -> UInt32 {
-    return multiplyResult
+// Combined computation function
+@_cdecl("swift_compute")
+public func swiftCompute(_ x: UInt32, _ y: UInt32) -> UInt32 {
+    let sum = swiftAdd(x, y)
+    let product = swiftMultiply(x, y)
+    return swiftAdd(sum, product)  // Return sum + product
 }
