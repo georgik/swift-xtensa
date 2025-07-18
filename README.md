@@ -15,7 +15,7 @@ This project demonstrates running Swift code on the ESP32-S3 microcontroller usi
 - **Edge cases**: Proper handling of boundary conditions
 
 ### ✅ **Key Achievement:**
-**First working Swift-to-Xtensa compilation** with proper target architecture handling, validating that Swift can run on non-ARM embedded systems with correct LLVM IR transformations.
+**Working Swift-to-Xtensa PoC compilation** with proper target architecture handling, validating that Swift can run on non-ARM embedded systems with correct LLVM IR transformations.
 
 ## 🚀 What We Achieved
 
