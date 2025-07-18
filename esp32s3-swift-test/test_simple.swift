@@ -77,3 +77,20 @@ public func swiftFibonacci(_ n: UInt32) -> UInt32 {
     
     return b
 }
+
+// Simple character manipulation function that returns first character of name
+@_cdecl("swift_char_test")
+public func swiftCharTest(_ name: UnsafePointer<CChar>) -> CChar {
+    // Return the first character of the name
+    return name[0]
+}
+
+// Simple string length function (manual implementation)
+@_cdecl("swift_string_length")
+public func swiftStringLength(_ name: UnsafePointer<CChar>) -> UInt32 {
+    var len: UInt32 = 0
+    while name[Int(len)] != 0 {
+        len = len + 1
+    }
+    return len
+}

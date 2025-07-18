@@ -142,6 +142,8 @@ cat >> "$OUTPUT_FILE" << 'EOF'
 !0 = !{i32 1, !"wchar_size", i32 4}
 !1 = !{i32 1, !"Swift Version", i32 7}
 !2 = !{!"standard-library", i1 false}
+!17 = !{}
+!18 = !{i64 8}
 EOF
 
 echo "✅ Swift LLVM IR patches applied successfully!"

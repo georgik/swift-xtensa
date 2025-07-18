@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
@@ -11,6 +12,8 @@ extern uint32_t swift_shift(uint32_t a, uint32_t b);
 extern uint32_t swift_compute(uint32_t x, uint32_t y);
 extern uint32_t swift_power(uint32_t base, uint32_t exponent);
 extern uint32_t swift_fibonacci(uint32_t n);
+extern char swift_char_test(const char* name);
+extern uint32_t swift_string_length(const char* name);
 
 static const char* TAG = "swift_test";
 
@@ -72,6 +75,23 @@ void app_main(void) {
     uint32_t swift_fib_edge = swift_fibonacci(0);  // Fib(0) = 0
     ESP_LOGI(TAG, "Swift fibonacci edge case: fib(0) = %u", swift_fib_edge);
     
+    // Test Swift string functions
+    ESP_LOGI(TAG, "Testing Swift string functions...");
+    const char* test_name = "Swift";
+    char first_char = swift_char_test(test_name);
+    ESP_LOGI(TAG, "Swift char test: First char of '%s' is '%c' (ASCII %d)", test_name, first_char, first_char);
+    
+    uint32_t name_length = swift_string_length(test_name);
+    ESP_LOGI(TAG, "Swift string length: '%s' has %u characters", test_name, name_length);
+    
+    // Test with different names
+    const char* test_name2 = "ESP32-S3";
+    char first_char2 = swift_char_test(test_name2);
+    ESP_LOGI(TAG, "Swift char test: First char of '%s' is '%c' (ASCII %d)", test_name2, first_char2, first_char2);
+    
+    uint32_t name_length2 = swift_string_length(test_name2);
+    ESP_LOGI(TAG, "Swift string length: '%s' has %u characters", test_name2, name_length2);
+    
     // Verify results
     bool all_passed = true;
     
@@ -117,6 +137,27 @@ void app_main(void) {
     
     if (swift_fib_edge != 0) {  // Fib(0) = 0
         ESP_LOGE(TAG, "ERROR: Swift fibonacci edge case failed! Expected 0, got %u", swift_fib_edge);
+        all_passed = false;
+    }
+    
+    // Validate string functions
+    if (first_char != 'S') {
+        ESP_LOGE(TAG, "ERROR: Swift char test failed! Expected 'S', got '%c'", first_char);
+        all_passed = false;
+    }
+    
+    if (name_length != 5) {
+        ESP_LOGE(TAG, "ERROR: Swift string length failed! Expected 5, got %u", name_length);
+        all_passed = false;
+    }
+    
+    if (first_char2 != 'E') {
+        ESP_LOGE(TAG, "ERROR: Swift char test 2 failed! Expected 'E', got '%c'", first_char2);
+        all_passed = false;
+    }
+    
+    if (name_length2 != 8) {
+        ESP_LOGE(TAG, "ERROR: Swift string length 2 failed! Expected 8, got %u", name_length2);
         all_passed = false;
     }
     
