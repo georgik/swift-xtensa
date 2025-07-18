@@ -33,3 +33,47 @@ public func swiftCompute(_ x: UInt32, _ y: UInt32) -> UInt32 {
     let product = swiftMultiply(x, y)
     return swiftAdd(sum, product)  // Return sum + product
 }
+
+// Power function using repeated multiplication (safe for embedded)
+@_cdecl("swift_power")
+public func swiftPower(_ base: UInt32, _ exponent: UInt32) -> UInt32 {
+    if exponent == 0 {
+        return 1
+    }
+    
+    var result: UInt32 = 1
+    var exp = exponent
+    var b = base
+    
+    // Use binary exponentiation for efficiency
+    while exp > 0 {
+        if (exp & 1) == 1 {
+            result = swiftMultiply(result, b)
+        }
+        b = swiftMultiply(b, b)
+        exp = swiftShift(exp, 1)  // exp >>= 1
+    }
+    
+    return result
+}
+
+// Fibonacci function (iterative, safe for embedded)
+@_cdecl("swift_fibonacci")
+public func swiftFibonacci(_ n: UInt32) -> UInt32 {
+    if n <= 1 {
+        return n
+    }
+    
+    var a: UInt32 = 0
+    var b: UInt32 = 1
+    var i: UInt32 = 2
+    
+    while i <= n {
+        let temp = swiftAdd(a, b)
+        a = b
+        b = temp
+        i = swiftAdd(i, 1)
+    }
+    
+    return b
+}

@@ -47,28 +47,15 @@ else
     exit 1
 fi
 
-# Step 2: Fix LLVM IR for Xtensa (correct target triple and data layout)
-echo -e "${BLUE}🔧 Step 2: Fixing LLVM IR for Xtensa target...${NC}"
-cp test_simple.ll test_simple_xtensa.ll
-
-# Fix target triple and data layout
-sed -i '' 's/target datalayout = ".*"/target datalayout = "e-m:e-p:32:32-i64:64-i128:128-n32"/' test_simple_xtensa.ll
-sed -i '' 's/target triple = ".*"/target triple = "xtensa-esp-elf"/' test_simple_xtensa.ll
-
-# Fix target CPU in attributes
-sed -i '' 's/"target-cpu"=".*"/"target-cpu"="esp32s3"/' test_simple_xtensa.ll
-
-# Remove ARM-specific target features
-sed -i '' 's/"target-features"="[^"]*"//' test_simple_xtensa.ll
-
-# Remove problematic linker options and fix metadata
-sed -i '' '/!llvm.linker.options/d' test_simple_xtensa.ll
-sed -i '' '/SDK Version/d' test_simple_xtensa.ll
-sed -i '' '/Objective-C/d' test_simple_xtensa.ll
-sed -i '' '/PIC Level/d' test_simple_xtensa.ll
-sed -i '' '/uwtable/d' test_simple_xtensa.ll
-sed -i '' '/frame-pointer/d' test_simple_xtensa.ll
-echo -e "${GREEN}✅ LLVM IR corrected for Xtensa${NC}"
+# Step 2: Fix LLVM IR for Xtensa (using isolated patches)
+echo -e "${BLUE}🔧 Step 2: Applying Swift LLVM IR patches for Xtensa...${NC}"
+"$PROJECT_DIR/swift-llvm-xtensa-patches.sh" test_simple.ll test_simple_xtensa.ll
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ LLVM IR patches applied successfully${NC}"
+else
+    echo -e "${RED}❌ LLVM IR patches failed${NC}"
+    exit 1
+fi
 
 # Step 3: Compile LLVM IR to Xtensa assembly
 echo -e "${BLUE}🔧 Step 3: Compiling LLVM IR to Xtensa assembly...${NC}"

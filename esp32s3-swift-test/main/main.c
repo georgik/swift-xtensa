@@ -9,6 +9,8 @@ extern uint32_t swift_multiply(uint32_t a, uint32_t b);
 extern uint32_t swift_subtract(uint32_t a, uint32_t b);
 extern uint32_t swift_shift(uint32_t a, uint32_t b);
 extern uint32_t swift_compute(uint32_t x, uint32_t y);
+extern uint32_t swift_power(uint32_t base, uint32_t exponent);
+extern uint32_t swift_fibonacci(uint32_t n);
 
 static const char* TAG = "swift_test";
 
@@ -55,6 +57,21 @@ void app_main(void) {
     uint32_t swift_compute_result = swift_compute(5, 3);
     ESP_LOGI(TAG, "Swift compute(5, 3): (5+3) + (5*3) = %u", swift_compute_result);
     
+    // Test new advanced Swift functions
+    ESP_LOGI(TAG, "Testing advanced Swift functions...");
+    uint32_t swift_power_result = swift_power(2, 8);  // 2^8 = 256
+    ESP_LOGI(TAG, "Swift power: 2^8 = %u", swift_power_result);
+    
+    uint32_t swift_fib_result = swift_fibonacci(10);  // 10th Fibonacci number = 55
+    ESP_LOGI(TAG, "Swift fibonacci(10) = %u", swift_fib_result);
+    
+    // Test edge cases
+    uint32_t swift_power_edge = swift_power(5, 0);  // Any number^0 = 1
+    ESP_LOGI(TAG, "Swift power edge case: 5^0 = %u", swift_power_edge);
+    
+    uint32_t swift_fib_edge = swift_fibonacci(0);  // Fib(0) = 0
+    ESP_LOGI(TAG, "Swift fibonacci edge case: fib(0) = %u", swift_fib_edge);
+    
     // Verify results
     bool all_passed = true;
     
@@ -80,6 +97,26 @@ void app_main(void) {
     
     if (swift_compute_result != 23) {  // (5+3) + (5*3) = 8 + 15 = 23
         ESP_LOGE(TAG, "ERROR: Swift compute failed! Expected 23, got %u", swift_compute_result);
+        all_passed = false;
+    }
+    
+    if (swift_power_result != 256) {  // 2^8 = 256
+        ESP_LOGE(TAG, "ERROR: Swift power failed! Expected 256, got %u", swift_power_result);
+        all_passed = false;
+    }
+    
+    if (swift_fib_result != 55) {  // 10th Fibonacci number = 55
+        ESP_LOGE(TAG, "ERROR: Swift fibonacci failed! Expected 55, got %u", swift_fib_result);
+        all_passed = false;
+    }
+    
+    if (swift_power_edge != 1) {  // Any number^0 = 1
+        ESP_LOGE(TAG, "ERROR: Swift power edge case failed! Expected 1, got %u", swift_power_edge);
+        all_passed = false;
+    }
+    
+    if (swift_fib_edge != 0) {  // Fib(0) = 0
+        ESP_LOGE(TAG, "ERROR: Swift fibonacci edge case failed! Expected 0, got %u", swift_fib_edge);
         all_passed = false;
     }
     
