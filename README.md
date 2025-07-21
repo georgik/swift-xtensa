@@ -2,6 +2,8 @@
 
 This project demonstrates building and running Swift on the ESP32-S3 using the Xtensa toolchain. It includes all necessary scripts and configurations to replicate the process for ESP32-S3 Xtensa builds with ESP-IDF.
 
+Note: for IR variant of experimental build, please check branch feature/llvm-ir
+
 ## Prerequisites
 
 - **System Requirements**: macOS or Linux
