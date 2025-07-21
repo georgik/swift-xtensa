@@ -5,11 +5,17 @@ set -e
 GREEN='\033[0;32m'; NC='\033[0m'
 log() { echo -e "${GREEN}[$(date +%H:%M:%S)] $1${NC}"; }
 
-WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SWIFT_DIR="$WORKSPACE_DIR/swift"
-LLVM_DIR="$WORKSPACE_DIR/llvm-project-espressif"
-BUILD_DIR="$WORKSPACE_DIR/build"
-INSTALL_DIR="$WORKSPACE_DIR/install"
+# Load workspace configuration
+if [ -f ./.swift-workspace ]; then
+    source ./.swift-workspace
+else
+    # Fallback configuration
+    WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    SWIFT_DIR="$WORKSPACE_DIR/swift"
+    LLVM_DIR="$WORKSPACE_DIR/llvm-project"
+    BUILD_DIR="$WORKSPACE_DIR/build"
+    INSTALL_DIR="$WORKSPACE_DIR/install"
+fi
 
 log "Building Swift compiler with Xtensa support..."
 

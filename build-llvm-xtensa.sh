@@ -5,10 +5,16 @@ set -e
 GREEN='\033[0;32m'; NC='\033[0m'
 log() { echo -e "${GREEN}[$(date +%H:%M:%S)] $1${NC}"; }
 
-WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LLVM_DIR="$WORKSPACE_DIR/llvm-project-espressif"
-LLVM_BUILD_DIR="$WORKSPACE_DIR/build/llvm"
-INSTALL_DIR="$WORKSPACE_DIR/install"
+# Load workspace configuration
+if [ -f ./.swift-workspace ]; then
+    source ./.swift-workspace
+else
+    # Fallback configuration
+    WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    LLVM_DIR="$WORKSPACE_DIR/llvm-project"
+    LLVM_BUILD_DIR="$WORKSPACE_DIR/build/llvm"
+    INSTALL_DIR="$WORKSPACE_DIR/install"
+fi
 
 log "Building LLVM Xtensa backend..."
 

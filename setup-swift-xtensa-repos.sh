@@ -2,7 +2,7 @@
 # setup-swift-xtensa-repos.sh - Initialize Swift-Xtensa workspace with required repositories
 # Usage: ./setup-swift-xtensa-repos.sh
 
-set -e
+# Note: We don't use 'set -e' globally because update-checkout might have non-critical failures
 
 # Colors for logging
 GREEN='\033[0;32m'
@@ -51,14 +51,30 @@ fi
 log "Bootstrapping Swift dependencies (optimized for Xtensa)..."
 
 cd swift
+
+# Remove problematic cmake directory if it exists and is causing issues
+if [ -d "../cmake" ]; then
+    log "Checking existing cmake repository..."
+    cd ../cmake
+    if ! git status >/dev/null 2>&1 || ! git tag | grep -q "v3.30"; then
+        log "Removing problematic cmake repository to avoid checkout errors"
+        cd ..
+        rm -rf cmake
+    else
+        cd ../swift
+    fi
+fi
+
 # Use --skip-history for faster clone and skip non-essential repositories
-python3 utils/update-checkout \
+log "Running update-checkout with cmake skipped..."
+if ! python3 utils/update-checkout \
     --clone \
     --scheme "$SWIFT_BRANCH" \
     --skip-history \
     --skip-repository swift \
     --skip-repository llvm-project \
     --skip-repository cmark \
+    --skip-repository cmake \
     --skip-repository swift-syntax \
     --skip-repository swift-stress-tester \
     --skip-repository swift-corelibs-foundation \
@@ -74,7 +90,9 @@ python3 utils/update-checkout \
     --skip-repository swift-cmark \
     --skip-repository swift-format \
     --skip-repository swift-installer-scripts \
-    --skip-repository swift-corelibs-xctest
+    --skip-repository swift-corelibs-xctest; then
+    warn "update-checkout had some issues, but continuing..."
+fi
 
 cd "$WORKSPACE_DIR"
 
@@ -115,31 +133,46 @@ EOF
 log "Creating build environment script..."
 cat > build-env.sh << 'EOF'
 #!/bin/bash
+# build-env.sh - Proper environment setup for Swift-Xtensa
+
 # Load workspace configuration
-if [ -f .swift-workspace ]; then
-    source .swift-workspace
+WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$WORKSPACE_DIR/.swift-workspace" ]; then
+    source "$WORKSPACE_DIR/.swift-workspace"
 else
     echo "ERROR: .swift-workspace not found. Run setup first."
     exit 1
 fi
 
-# Setup build environment
-export PATH=$SWIFT_DIR/utils:$PATH
-export PATH=$INSTALL_DIR/bin:$PATH
+# Set environment variables for Swift build
+export SWIFT_SOURCE_ROOT="$SWIFT_DIR"
+export SWIFT_BUILD_ROOT="$BUILD_DIR"
+export LLVM_SOURCE_DIR="$LLVM_DIR"
+export LLVM_BUILD_DIR="$BUILD_DIR/llvm"
+export INSTALL_PREFIX="$INSTALL_DIR"
+
+# Add Swift utils to PATH
+export PATH="$SWIFT_SOURCE_ROOT/utils:$PATH"
+export PATH="$INSTALL_PREFIX/bin:$PATH"
 
 # Create directories if they don't exist
 mkdir -p "$BUILD_DIR" "$INSTALL_DIR"
 
-echo "✅ Swift-Xtensa Environment Ready"
-echo "Swift:     $SWIFT_DIR"
-echo "LLVM:      $LLVM_DIR"  
-echo "Build:     $BUILD_DIR"
-echo "Install:   $INSTALL_DIR"
+# Ensure we're in the right directory
+cd "$WORKSPACE_DIR"
+
+echo "Swift-Xtensa Environment Ready"
+echo "============================="
+echo "SWIFT_SOURCE_ROOT: $SWIFT_SOURCE_ROOT"
+echo "SWIFT_BUILD_ROOT:  $SWIFT_BUILD_ROOT"
+echo "LLVM_SOURCE_DIR:   $LLVM_SOURCE_DIR"
+echo "INSTALL_PREFIX:    $INSTALL_PREFIX"
+echo "PWD:               $(pwd)"
 echo ""
 echo "Available commands:"
-echo "  build-llvm-xtensa.sh     - Build LLVM with Xtensa backend"
-echo "  build-swift-compiler.sh  - Build Swift compiler for Xtensa"
-echo "  verify-xtensa.sh         - Validate Xtensa toolchain"
+echo "  ./fix-llvm-path.sh       - Verify LLVM directory structure"
+echo "  ./build-llvm-xtensa.sh   - Build LLVM with Xtensa backend"
+echo "  ./build-swift-compiler.sh - Build Swift compiler for Xtensa"
 EOF
 chmod +x build-env.sh
 
