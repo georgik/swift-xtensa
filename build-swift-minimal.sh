@@ -5,7 +5,7 @@ set -e
 GREEN='\033[0;32m'; NC='\033[0m'
 log() { echo -e "${GREEN}[$(date +%H:%M:%S)] $1${NC}"; }
 
-WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/swift-xtensa-workspace"
 SWIFT_DIR="$WORKSPACE_DIR/swift"
 BUILD_DIR="$WORKSPACE_DIR/build"
 INSTALL_DIR="$WORKSPACE_DIR/install"
@@ -23,7 +23,7 @@ cmake \
   -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="Xtensa" \
   -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
   -DLLVM_ENABLE_PROJECTS="clang;lld" \
-  "$WORKSPACE_DIR/llvm-project-espressif/llvm"
+  "$WORKSPACE_DIR/llvm-project/llvm"
 
 ninja -j$(sysctl -n hw.ncpu) install
 
