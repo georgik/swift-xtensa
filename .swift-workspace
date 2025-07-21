@@ -1,0 +1,36 @@
+# Swift-Xtensa Workspace Configuration
+# All paths relative to this directory
+
+# Get the current directory (where this file resides)
+WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Repository directories
+SWIFT_DIR="$WORKSPACE_DIR/swift"
+LLVM_DIR="$WORKSPACE_DIR/llvm-project-espressif"
+CMARK_DIR="$WORKSPACE_DIR/cmark"
+
+# Build and output directories
+BUILD_DIR="$WORKSPACE_DIR/build"
+INSTALL_DIR="$WORKSPACE_DIR/install"
+
+# Environment variables for Swift build system
+export SWIFT_SOURCE_ROOT="$SWIFT_DIR"
+export SWIFT_BUILD_ROOT="$BUILD_DIR"
+export LLVM_SOURCE_DIR="$LLVM_DIR"
+export LLVM_BUILD_DIR="$BUILD_DIR/llvm-macosx-arm64"
+
+# Additional paths
+export PATH="$SWIFT_DIR/utils:$INSTALL_DIR/bin:$PATH"
+
+# Build configuration
+SWIFT_BRANCH="release/6.2"
+ESPRESSIF_BRANCH="xtensa_release_17.0.1"
+
+# Debug info
+echo "Swift-Xtensa Environment Loaded"
+echo "  WORKSPACE_DIR: $WORKSPACE_DIR"
+echo "  SWIFT_DIR:     $SWIFT_DIR"
+echo "  LLVM_DIR:      $LLVM_DIR"
+echo "  CMARK_DIR:     $CMARK_DIR"
+echo "  BUILD_DIR:     $BUILD_DIR"
+echo "  INSTALL_DIR:   $INSTALL_DIR"
