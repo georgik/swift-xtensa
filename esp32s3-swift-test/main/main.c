@@ -3,17 +3,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
-
-// Declaration of Swift functions
-extern uint32_t swift_add(uint32_t a, uint32_t b);
-extern uint32_t swift_multiply(uint32_t a, uint32_t b);
-extern uint32_t swift_subtract(uint32_t a, uint32_t b);
-extern uint32_t swift_shift(uint32_t a, uint32_t b);
-extern uint32_t swift_compute(uint32_t x, uint32_t y);
-extern uint32_t swift_power(uint32_t base, uint32_t exponent);
-extern uint32_t swift_fibonacci(uint32_t n);
-extern char swift_char_test(const char* name);
-extern uint32_t swift_string_length(const char* name);
+#include "swift_functions.h"
 
 static const char* TAG = "swift_test";
 
