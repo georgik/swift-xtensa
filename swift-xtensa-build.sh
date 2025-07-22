@@ -15,11 +15,23 @@ INSTALL_DIR="$WORKSPACE_DIR/install"
 # ---------------------------------------------------------------------------
 # 1.  Clone once (commented out after first run)
 # ---------------------------------------------------------------------------
-# log "Cloning dependencies..."
-# run "git clone --depth=1 --branch release/6.2 https://github.com/apple/swift.git"
-# run "git clone --depth=1 --branch release/6.2 https://github.com/apple/cmark.git"
-# run "git clone --depth=1 --branch release/6.2 https://github.com/apple/swift-syntax.git"
-# run "git clone --depth=1 --branch xtensa_release_17.0.1 https://github.com/espressif/llvm-project.git llvm-project-espressif"
+
+clone_if_needed() {
+  local dir=$1
+  local repo=$2
+  local branch=$3
+  if [[ -d "$dir" ]]; then
+    log "Directory '$dir' already exists – skipping clone."
+  else
+    log "Cloning $repo (branch $branch) into $dir..."
+    run "git clone --depth=1 --branch $branch $repo $dir"
+  fi
+}
+
+clone_if_needed "$WORKSPACE_DIR/swift"          "https://github.com/apple/swift.git"           "release/6.2"
+clone_if_needed "$WORKSPACE_DIR/cmark"          "https://github.com/apple/cmark.git"           "release/6.2"
+clone_if_needed "$WORKSPACE_DIR/swift-syntax"   "https://github.com/apple/swift-syntax.git"    "release/6.2"
+clone_if_needed "$LLVM_DIR" "https://github.com/espressif/llvm-project.git" "esp_main"
 
 # ---------------------------------------------------------------------------
 # 2.  Build & install cmark (host tool, tiny)
