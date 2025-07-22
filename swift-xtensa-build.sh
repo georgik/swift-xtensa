@@ -12,6 +12,12 @@ run()  { log "Running: $*"; eval "$*"; }
 
 WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Check for clean build flag
+if [[ "$1" == "--clean" ]]; then
+  log "Clean build requested - removing existing build and install directories"
+  rm -rf "$WORKSPACE_DIR/build" "$WORKSPACE_DIR/install"
+fi
+
 # ---------------------------------------------------------------------------
 # Directories
 # ---------------------------------------------------------------------------
@@ -27,6 +33,7 @@ INSTALL_DIR="$WORKSPACE_DIR/install"
 echo "Setting up Swift with Xtensa support..."
 echo "Workspace directory: $WORKSPACE_DIR"
 echo "Install directory:  $INSTALL_DIR"
+echo "Usage: $0 [--clean] # Use --clean to remove previous build artifacts"
 
 # ---------------------------------------------------------------------------
 # Helper: clone once
@@ -42,10 +49,10 @@ clone_if_needed() {
 # 1.  Clone sources
 # ---------------------------------------------------------------------------
 clone_if_needed "$SWIFT_DIR"          "https://github.com/apple/swift.git"           "release/6.2"
-clone_if_needed "$LLVM_APPLE_DIR"     "https://github.com/swiftlang/llvm-project.git" "release/6.2"
-clone_if_needed "$LLVM_XTENSA_DIR"    "https://github.com/espressif/llvm-project.git" "esp_main"
+clone_if_needed "$LLVM_APPLE_DIR"     "https://github.com/swiftlang/llvm-project.git" "swift/release/6.2"
 clone_if_needed "$CMARK_DIR"          "https://github.com/apple/cmark.git"           "release/6.2"
 clone_if_needed "$SWIFT_SYNTAX_DIR"   "https://github.com/apple/swift-syntax.git"    "release/6.2"
+# clone_if_needed "$LLVM_XTENSA_DIR" "https://github.com/espressif/llvm-project.git" "esp_main"  # not needed for frontend
 
 # ---------------------------------------------------------------------------
 # 2.  Build cmark host tool
@@ -64,6 +71,12 @@ run "cmake -G Ninja \
 run "ninja -j$(sysctl -n hw.ncpu)"
 run "ninja install"
 
+# Remove conflicting module map from installed cmark to avoid redefinition
+if [[ -f "$INSTALL_DIR/include/cmark_gfm/module.modulemap" ]]; then
+  log "Removing conflicting cmark module map from install directory"
+  rm "$INSTALL_DIR/include/cmark_gfm/module.modulemap"
+fi
+
 # ---------------------------------------------------------------------------
 # 3.  Build Apple LLVM (CAS patches)
 # ---------------------------------------------------------------------------
@@ -76,10 +89,17 @@ run "cmake -G Ninja \
   -DLLVM_TARGETS_TO_BUILD='' \
   -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD='' \
   -DLLVM_ENABLE_PROJECTS='clang;lld' \
+  -DLLVM_ENABLE_MODULES=ON \
+  -DLLVM_INCLUDE_TOOLS=ON \
+  -DLLVM_INSTALL_UTILS=ON \
   '$LLVM_APPLE_DIR/llvm'"
 run "ninja -j$(sysctl -n hw.ncpu)"
 run "ninja install"
 run "ninja install-clang-resource-headers"
+
+# Copy LLVM config header that Swift needs
+mkdir -p "$INSTALL_DIR/include/llvm/Config"
+cp "$BUILD_DIR/llvm-apple-macosx-arm64/include/llvm/Config/config.h" "$INSTALL_DIR/include/llvm/Config/config.h"
 
 # ---------------------------------------------------------------------------
 # 4.  Build Swift host tools
@@ -98,7 +118,7 @@ run "cmake -G Ninja \
   -DSWIFT_PATH_TO_CMARK_SOURCE='$CMARK_DIR' \
   -DSWIFT_PATH_TO_CMARK_BUILD='$BUILD_DIR/cmark-macosx-arm64' \
   -DSWIFT_PATH_TO_SWIFT_SYNTAX_SOURCE='$SWIFT_SYNTAX_DIR' \
-  -DSWIFT_BUILD_SWIFT_SYNTAX=ON \
+  -DSWIFT_BUILD_SWIFT_SYNTAX=OFF \
   -DSWIFT_INCLUDE_TOOLS=ON \
   -DSWIFT_BUILD_STDLIB=OFF \
   -DSWIFT_BUILD_SDK_OVERLAY=OFF \
@@ -116,15 +136,17 @@ run "cmake -G Ninja \
   -DSWIFT_ENABLE_LIBXML2=OFF \
   -DSWIFT_ENABLE_EXPERIMENTAL_CXX_INTEROP=OFF \
   -DSWIFT_ENABLE_CAS=OFF \
-  -DCMAKE_Swift_COMPILER=/Users/georgik/.swiftly/bin/swiftc \
-  -DCMAKE_Swift_FLAGS='-sdk $(xcrun --sdk macosx --show-sdk-path)' \
   -DSWIFT_HOST_VARIANT=macosx \
   -DSWIFT_HOST_VARIANT_ARCH=arm64 \
   -DSWIFT_DARWIN_SUPPORTED_ARCHS=arm64 \
   '$SWIFT_DIR'"
 
 run "ninja -j$(sysctl -n hw.ncpu) swift-frontend"
-run "ninja install-swift-frontend install-swiftc"
+
+# Install Swift tools manually since install targets may not be available
+log "Installing Swift tools..."
+cp "bin/swift-frontend" "$INSTALL_DIR/bin/"
+cp "bin/swiftc" "$INSTALL_DIR/bin/"
 
 # ---------------------------------------------------------------------------
 # 5.  Build Espressif LLVM (Xtensa) – optional, kept for future cross-linking
@@ -143,5 +165,10 @@ run "ninja install-swift-frontend install-swiftc"
 # run "ninja -j$(sysctl -n hw.ncpu)"
 # run "ninja install"
 
+# Test the Swift compiler
+log "Testing Swift compiler..."
+"$INSTALL_DIR/bin/swiftc" --version
+
 log "✅ Swift with Xtensa support is ready!"
 log "📍 Tools available at: $INSTALL_DIR/bin/"
+log "🚀 Use: $INSTALL_DIR/bin/swiftc to compile Swift code"

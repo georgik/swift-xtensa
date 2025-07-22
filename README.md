@@ -1,71 +1,80 @@
 # Swift on ESP32-S3 - Xtensa Cross-Compilation Validation
 
-This project demonstrates building and running Swift on the ESP32-S3 using the Xtensa toolchain. It includes all necessary scripts and configurations to replicate the process for ESP32-S3 Xtensa builds with ESP-IDF.
+This project demonstrates building and running Swift on the ESP32-S3 using the Xtensa toolchain. It provides a comprehensive build script to compile a Swift compiler with Xtensa support for ESP32-S3 development with ESP-IDF.
 
 Note: for IR variant of experimental build, please check branch feature/llvm-ir
 
 ## Prerequisites
 
-- **System Requirements**: macOS or Linux
+- **System Requirements**: macOS (tested) or Linux
 - **Build Tools**: git, cmake, ninja, python3
+- **Swift toolchain**: A working Swift installation (for bootstrapping)
 - **ESP-IDF 6.0+**: For ESP32-S3 development
-- **Disk Space**: ~8GB for repositories and build artifacts
+- **Disk Space**: ~15GB for repositories and build artifacts
 
-## Setup Instructions
+## Quick Start
 
-### 1. **Initialize Swift-Xtensa Repositories**:
+### 1. **Build Swift Compiler with Xtensa Support**:
    ```bash
-   ./setup-swift-xtensa-repos.sh
+   ./swift-xtensa-build.sh
    ```
-   This will:
+   
+   For a clean build (removes previous artifacts):
+   ```bash
+   ./swift-xtensa-build.sh --clean
+   ```
+
+   This single script will:
    - Clone Swift compiler (release/6.2)
-   - Clone LLVM with Xtensa backend (Espressif fork)
-   - Set up minimal Swift dependencies
-   - Create workspace configuration
+   - Clone Apple's LLVM with CAS patches (swift/release/6.2)
+   - Clone cmark and swift-syntax dependencies
+   - Build and install all components
+   - Create a working Swift compiler at `./install/bin/swiftc`
 
-### 2. **Copy Build Scripts to Workspace**:
+### 2. **Validate the Swift Compiler**:
    ```bash
-   cp build-*.sh swift-xtensa-workspace/
-   cd swift-xtensa-workspace
+   ./install/bin/swiftc --version
    ```
 
-### 3. **Set Up the Build Environment**:
-   ```bash
-   source build-env.sh
-   ```
-
-### 4. **Build the Swift Compiler for Xtensa**:
-   ```bash
-   ./build-llvm-xtensa.sh    # Build LLVM with Xtensa backend
-   ./build-swift-compiler.sh # Build Swift compiler for Xtensa
-   ```
-
-### 5. **Validate the Xtensa LLVM and Swift Toolchain**:
-   ```bash
-   cd ../swift-xtensa-validation
-   ./verify-xtensa.sh
-   ```
-
-### 6. **Set Up ESP-IDF Environment**:
+### 3. **Set Up ESP-IDF Environment** (for cross-compilation):
    ```bash
    source ~/esp-idf/export.sh  # Adjust path to your ESP-IDF installation
    ```
 
-### 7. **Build and Flash the ESP-IDF Project**:
+### 4. **Build and Flash the ESP-IDF Project**:
    ```bash
-   cd esp-idf-project
+   cd swift-xtensa-validation/esp-idf-project
    idf.py set-target esp32s3
    idf.py build
    idf.py flash monitor
    ```
 
-## Description of Key Scripts
-- **`build-llvm-xtensa.sh`**: Script to build the LLVM backend for Xtensa target.
-- **`build-swift-compiler.sh`**: Script to build the Swift compiler.
-- **`verify-xtensa.sh`**: Script to validate the Xtensa toolchain with basic computations.
+## Project Structure
 
-## ESP-IDF Project
-Located in `swift-xtensa-validation/esp-idf-project`.
+```
+swift-xtensa/
+├── swift-xtensa-build.sh       # Main build script
+├── swift/                      # Swift compiler source (auto-cloned)
+├── llvm-apple/                 # Apple LLVM with CAS patches (auto-cloned)
+├── cmark/                      # CommonMark library (auto-cloned)
+├── swift-syntax/               # Swift syntax library (auto-cloned)
+├── build/                      # Build artifacts (created during build)
+├── install/                    # Installed tools and libraries
+│   └── bin/
+│       ├── swiftc             # Swift compiler
+│       ├── swift-frontend     # Swift frontend
+│       ├── clang             # Clang compiler
+│       └── llvm-*            # LLVM tools
+└── swift-xtensa-validation/   # ESP32-S3 validation project
+    └── esp-idf-project/       # ESP-IDF project for testing
+```
+
+## Key Components
+
+- **`swift-xtensa-build.sh`**: Single comprehensive build script that handles all dependencies
+- **Apple LLVM**: Uses Swift's official LLVM fork with CAS (Content Addressable Storage) patches
+- **Swift Frontend**: Host-only Swift compiler without standard library
+- **ESP-IDF Integration**: Cross-compilation support for ESP32-S3 Xtensa targets
 
 ## Swift Functions
 `swift-functions.swift` contains simple Swift functions for addition, multiplication, and Fibonacci calculation, intended to demonstrate execution on the ESP32-S3.
@@ -83,11 +92,31 @@ I (275) SWIFT: ✅ All Swift computations passed!
 I (285) SWIFT: Swift code running on ESP32-S3!
 ```
 
+## Build Details
+
+The build process creates:
+1. **cmark**: CommonMark library for Swift documentation
+2. **LLVM + Clang**: Apple's LLVM fork with CAS (Content Addressable Storage) patches
+3. **Swift Frontend**: Host-only Swift compiler (no standard library)
+
+### Build Configuration
+- **CAS Support**: Disabled (`-DSWIFT_ENABLE_CAS=OFF`)
+- **Swift Syntax**: Disabled to avoid C++ interoperability issues
+- **Standard Library**: Disabled for minimal build
+- **Target**: Host architecture only (arm64-apple-macosx13.0)
+
 ## Troubleshooting
 
-- **Build fails**: Ensure all prerequisites are installed and ESP-IDF is properly set up
-- **Flash fails**: Check ESP32-S3 connection and permissions for USB device
-- **Swift compilation issues**: Verify LLVM with Xtensa backend is properly built
+### Build Issues
+- **cmark conflicts**: The script automatically removes conflicting module maps
+- **LLVM config missing**: The script ensures `llvm/Config/config.h` is properly installed
+- **C++ interop errors**: Swift-Syntax and experimental features are disabled
+- **Clean build**: Use `./swift-xtensa-build.sh --clean` to start fresh
+
+### Runtime Issues
+- **Target architecture errors**: Use explicit target: `swiftc -target arm64-apple-macosx13.0`
+- **Missing swift-driver**: Warning about legacy driver is expected and safe to ignore
+- **ESP32-S3 flash fails**: Check ESP32-S3 connection and permissions for USB device
 - **Object file not found**: Ensure `swift-functions.o` is compiled and in correct location
 
 ## Architecture
