@@ -12,6 +12,13 @@ LLVM_DIR="$WORKSPACE_DIR/llvm-project-espressif"
 BUILD_DIR="$WORKSPACE_DIR/build"
 INSTALL_DIR="$WORKSPACE_DIR/install"
 
+echo "Setting up Swift with Xtensa support..."
+echo "Workspace directory: $WORKSPACE_DIR"
+echo "Swift source directory: $SWIFT_DIR"
+echo "LLVM source directory: $LLVM_DIR"
+echo "Build directory: $BUILD_DIR"
+echo "Install directory: $INSTALL_DIR"
+
 # ---------------------------------------------------------------------------
 # 1.  Clone once (commented out after first run)
 # ---------------------------------------------------------------------------
@@ -76,6 +83,7 @@ run "cmake -G Ninja \
   -DClang_DIR='$INSTALL_DIR/lib/cmake/clang' \
   -DLLVM_BUILD_LIBRARY_DIR='lib' \
   -DLLVM_LIBRARY_DIR='$INSTALL_DIR/lib' \
+  -DLLVM_MAIN_SRC_DIR='$LLVM_DIR/llvm' \
   -DSWIFT_PATH_TO_CMARK_SOURCE='$WORKSPACE_DIR/cmark' \
   -DSWIFT_PATH_TO_CMARK_BUILD='$BUILD_DIR/cmark-macosx-arm64' \
   -DSWIFT_PATH_TO_SWIFT_SYNTAX_SOURCE='$WORKSPACE_DIR/swift-syntax' \
