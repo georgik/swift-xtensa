@@ -60,6 +60,7 @@ cd "$BUILD_DIR/llvm-macosx-arm64"
 run "cmake -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX='$INSTALL_DIR' \
+  -DSWIFT_NATIVE_SWIFT_TOOLS_PATH=/Users/georgik/.swiftly/bin \
   -DLLVM_TARGETS_TO_BUILD='' \
   -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD='Xtensa' \
   -DLLVM_ENABLE_PROJECTS='clang;lld' \
@@ -76,6 +77,7 @@ run "ninja install-clang-resource-headers"
 log "Building Swift host tools (swift-frontend + swiftc)..."
 mkdir -p "$BUILD_DIR/swift-macosx-arm64"
 cd "$BUILD_DIR/swift-macosx-arm64"
+log "Configuring Swift host tools (no-CAS, no-runtime)..."
 run "cmake -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX='$INSTALL_DIR' \
@@ -92,9 +94,24 @@ run "cmake -G Ninja \
   -DSWIFT_BUILD_STDLIB=OFF \
   -DSWIFT_BUILD_SDK_OVERLAY=OFF \
   -DSWIFT_BUILD_RUNTIME_WITH_HOST_COMPILER=ON \
+  -DSWIFT_ENABLE_EXPERIMENTAL_STRING_PROCESSING=OFF \
+  -DSWIFT_ENABLE_EXPERIMENTAL_CONCURRENCY=OFF \
+  -DSWIFT_ENABLE_EXPERIMENTAL_DISTRIBUTED=OFF \
+  -DSWIFT_ENABLE_EXPERIMENTAL_DIFFERENTIABLE_PROGRAMMING=OFF \
+  -DSWIFT_ENABLE_BACKTRACING=OFF \
+  -DSWIFT_ENABLE_CRASHREPORTERCLIENT=OFF \
+  -DSWIFT_ENABLE_REFLECTION=OFF \
+  -DSWIFT_ENABLE_RUNTIME_FUNCTION_COUNTERS=OFF \
+  -DSWIFT_ENABLE_LLDB=OFF \
+  -DSWIFT_ENABLE_LLD=OFF \
+  -DSWIFT_ENABLE_DISPATCH=OFF \
+  -DSWIFT_ENABLE_LIBXML2=OFF \
+  -DSWIFT_ENABLE_EXPERIMENTAL_CXX_INTEROP=OFF \
+  -DCMAKE_Swift_COMPILER=/Users/georgik/.swiftly/bin/swiftc \
+  -DCMAKE_Swift_FLAGS='-sdk $(xcrun --sdk macosx --show-sdk-path)' \
   -DSWIFT_HOST_VARIANT=macosx \
-  -DSWIFT_HOST_VARIANT_ARCH='arm64' \
-  -DSWIFT_DARWIN_SUPPORTED_ARCHS='arm64' \
+  -DSWIFT_HOST_VARIANT_ARCH=arm64 \
+  -DSWIFT_DARWIN_SUPPORTED_ARCHS=arm64 \
   '$SWIFT_DIR'"
 
 run "ninja -j$(sysctl -n hw.ncpu) swift-frontend"
