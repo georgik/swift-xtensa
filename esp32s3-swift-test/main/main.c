@@ -5,6 +5,9 @@
 #include "esp_log.h"
 #include "swift_functions.h"
 
+// Swift function declarations (exported via @_cdecl)
+extern void swift_run_tests(void);
+
 static const char* TAG = "swift_test";
 
 // Simple C function for testing
@@ -29,6 +32,10 @@ void app_main(void) {
     
     ESP_LOGI(TAG, "");
     ESP_LOGI(TAG, "Now testing Swift function calls:");
+    
+    // Call Swift's own test function first
+    ESP_LOGI(TAG, "Running Swift internal tests...");
+    swift_run_tests();
     
     // Test individual Swift functions
     ESP_LOGI(TAG, "Testing individual Swift functions...");
