@@ -46,7 +46,14 @@ clone_if_needed "$LLVM_DIR" "https://github.com/espressif/llvm-project.git" "esp
 log "Building cmark..."
 mkdir -p "$BUILD_DIR/cmark-macosx-arm64"
 cd "$BUILD_DIR/cmark-macosx-arm64"
-run "cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX='$INSTALL_DIR' '$WORKSPACE_DIR/cmark'"
+cmake -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
+  -DCMARK_BUILD_TESTS=OFF \
+  -DCMARK_BUILD_SHARED_LIBS=OFF \
+  -DCMARK_BUILD_STATIC_LIBS=ON \
+  -DCMARK_INSTALL_MODULEMAP=OFF \
+  "$WORKSPACE_DIR/cmark"
 run "ninja -j$(sysctl -n hw.ncpu)"
 run "ninja install"
 
