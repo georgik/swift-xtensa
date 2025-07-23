@@ -99,6 +99,11 @@ The build process creates:
 2. **LLVM + Clang**: Apple's LLVM fork with CAS (Content Addressable Storage) patches
 3. **Swift Frontend**: Host-only Swift compiler (no standard library)
 
+Swiftc for building:
+- Apple Swift version 6.2-dev (LLVM 4197ac1672a278c, Swift acbdfef4f4d71b1)
+- Target: arm64-apple-macosx15.0
+- Build config: +assertions
+
 ### Build Configuration
 - **CAS Support**: Disabled (`-DSWIFT_ENABLE_CAS=OFF`)
 - **Swift Syntax**: Disabled to avoid C++ interoperability issues
