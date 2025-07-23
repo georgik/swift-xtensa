@@ -1,0 +1,64 @@
+From 95996c4ee99ce19ae47a2fe020fcb6b16e14dcbc Mon Sep 17 00:00:00 2001
+From: Scott Mabin <scott@mabez.dev>
+Date: Wed, 2 Nov 2022 11:28:18 +0000
+Subject: [PATCH 3/5] Enable Xtensa codegen for rustc_codegen_gcc
+
+* Updates uses of object::Architecture within the compiler
+---
+ compiler/rustc_codegen_gcc/src/asm.rs | 13 +++++++++++--
+ compiler/rustc_target/src/spec/mod.rs |  1 +
+ 2 files changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/compiler/rustc_codegen_gcc/src/asm.rs b/compiler/rustc_codegen_gcc/src/asm.rs
+index c35337ae..229c2ac4 100644
+--- a/compiler/rustc_codegen_gcc/src/asm.rs
++++ b/compiler/rustc_codegen_gcc/src/asm.rs
+@@ -717,6 +717,9 @@ fn reg_class_to_gcc(reg_class: InlineAsmRegClass) -> &'static str {
+             | X86InlineAsmRegClass::mmx_reg
+             | X86InlineAsmRegClass::tmm_reg,
+         ) => unreachable!("clobber-only"),
++        InlineAsmRegClass::Xtensa(XtensaInlineAsmRegClass::reg) => "r",
++        InlineAsmRegClass::Xtensa(XtensaInlineAsmRegClass::freg) => "f",
++        InlineAsmRegClass::Xtensa(XtensaInlineAsmRegClass::breg) => "b",
+         InlineAsmRegClass::SpirV(SpirVInlineAsmRegClass::reg) => {
+             bug!("GCC backend does not support SPIR-V")
+         }
+@@ -822,7 +825,10 @@ fn dummy_output_type<'gcc, 'tcx>(cx: &CodegenCx<'gcc, 'tcx>, reg: InlineAsmRegCl
+         InlineAsmRegClass::CSKY(CSKYInlineAsmRegClass::freg) => cx.type_f32(),
+         InlineAsmRegClass::SpirV(SpirVInlineAsmRegClass::reg) => {
+             bug!("GCC backend does not support SPIR-V")
+-        }
++        },
++        InlineAsmRegClass::Xtensa(XtensaInlineAsmRegClass::reg) => cx.type_i32(),
++        InlineAsmRegClass::Xtensa(XtensaInlineAsmRegClass::freg) => cx.type_f32(),
++        InlineAsmRegClass::Xtensa(XtensaInlineAsmRegClass::breg) => cx.type_i8(), // FIXME: should this be i1?
+         InlineAsmRegClass::Err => unreachable!(),
+     }
+ }
+@@ -1006,7 +1012,10 @@ fn modifier_to_gcc(
+         InlineAsmRegClass::CSKY(_) => None,
+         InlineAsmRegClass::SpirV(SpirVInlineAsmRegClass::reg) => {
+             bug!("LLVM backend does not support SPIR-V")
+-        }
++        },
++        InlineAsmRegClass::Xtensa(XtensaInlineAsmRegClass::reg) => unimplemented!(),
++        InlineAsmRegClass::Xtensa(XtensaInlineAsmRegClass::freg) => unimplemented!(),
++        InlineAsmRegClass::Xtensa(XtensaInlineAsmRegClass::breg) => unimplemented!(),
+         InlineAsmRegClass::Err => unreachable!(),
+     }
+ }
+diff --git a/compiler/rustc_target/src/spec/mod.rs b/compiler/rustc_target/src/spec/mod.rs
+index 303be54a..16dd2933 100644
+--- a/compiler/rustc_target/src/spec/mod.rs
++++ b/compiler/rustc_target/src/spec/mod.rs
+@@ -3605,6 +3605,7 @@ pub fn object_architecture(
+             "avr" => (Architecture::Avr, None),
+             "msp430" => (Architecture::Msp430, None),
+             "hexagon" => (Architecture::Hexagon, None),
++            "xtensa" => (Architecture::Xtensa, None),
+             "bpf" => (Architecture::Bpf, None),
+             "loongarch64" => (Architecture::LoongArch64, None),
+             "csky" => (Architecture::Csky, None),
+-- 
+2.50.1
+

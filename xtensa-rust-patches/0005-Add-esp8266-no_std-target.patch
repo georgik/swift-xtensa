@@ -1,0 +1,57 @@
+From 2ab28d2e728c222edd27f881fd18de24fd88332c Mon Sep 17 00:00:00 2001
+From: Scott Mabin <scott@mabez.dev>
+Date: Wed, 16 Oct 2024 14:05:37 +0200
+Subject: [PATCH 5/5] Add esp8266 no_std target
+
+---
+ compiler/rustc_target/src/spec/mod.rs         |  1 +
+ .../spec/targets/xtensa_esp8266_none_elf.rs   | 24 +++++++++++++++++++
+ 2 files changed, 25 insertions(+)
+ create mode 100644 compiler/rustc_target/src/spec/targets/xtensa_esp8266_none_elf.rs
+
+diff --git a/compiler/rustc_target/src/spec/mod.rs b/compiler/rustc_target/src/spec/mod.rs
+index 16dd2933..e01b3f8d 100644
+--- a/compiler/rustc_target/src/spec/mod.rs
++++ b/compiler/rustc_target/src/spec/mod.rs
+@@ -2003,6 +2003,7 @@ fn $module() {
+     ("xtensa-esp32s2-espidf", xtensa_esp32s2_espidf),
+     ("xtensa-esp32s3-none-elf", xtensa_esp32s3_none_elf),
+     ("xtensa-esp32s3-espidf", xtensa_esp32s3_espidf),
++    ("xtensa-esp8266-none-elf", xtensa_esp8266_none_elf),
+ 
+     ("i686-wrs-vxworks", i686_wrs_vxworks),
+     ("x86_64-wrs-vxworks", x86_64_wrs_vxworks),
+diff --git a/compiler/rustc_target/src/spec/targets/xtensa_esp8266_none_elf.rs b/compiler/rustc_target/src/spec/targets/xtensa_esp8266_none_elf.rs
+new file mode 100644
+index 00000000..557970f7
+--- /dev/null
++++ b/compiler/rustc_target/src/spec/targets/xtensa_esp8266_none_elf.rs
+@@ -0,0 +1,24 @@
++use crate::spec::{base::xtensa, Target, TargetOptions};
++
++pub(crate) fn target() -> Target {
++    Target {
++        llvm_target: "xtensa-none-elf".into(),
++        pointer_width: 32,
++        data_layout: "e-m:e-p:32:32-v1:8:8-i64:64-i128:128-n32".into(),
++        arch: "xtensa".into(),
++        metadata: crate::spec::TargetMetadata {
++            description: Some("Xtensa ESP8266".into()),
++            tier: Some(3),
++            host_tools: Some(false),
++            std: Some(false),
++        },
++
++        options: TargetOptions {
++            cpu: "esp8266".into(),
++            linker: Some("xtensa-lx106-elf-gcc".into()),
++            max_atomic_width: Some(32),
++            features: "+forced-atomics".into(),
++            ..xtensa::opts()
++        },
++    }
++}
+\ No newline at end of file
+-- 
+2.50.1
+
