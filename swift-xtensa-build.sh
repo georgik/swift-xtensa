@@ -50,7 +50,7 @@ clone_if_needed() {
 # ---------------------------------------------------------------------------
 #clone_if_needed "$SWIFT_DIR"          "https://github.com/apple/swift.git"           "release/6.2"
 clone_if_needed "$SWIFT_DIR"          "https://github.com/georgik/swift.git"           "feature/xtensa"
-clone_if_needed "$LLVM_APPLE_DIR"     "https://github.com/georgik/swift-llvm-project.git" "feature/xtensa"
+clone_if_needed "$LLVM_APPLE_DIR"     "https://github.com/georgik/swiftlang-llvm-project.git" "feature/xtensa"
 #clone_if_needed "$LLVM_APPLE_DIR"     "https://github.com/swiftlang/llvm-project.git" "swift/release/6.2"
 clone_if_needed "$CMARK_DIR"          "https://github.com/apple/cmark.git"           "release/6.2"
 clone_if_needed "$SWIFT_SYNTAX_DIR"   "https://github.com/apple/swift-syntax.git"    "release/6.2"
