@@ -48,8 +48,10 @@ clone_if_needed() {
 # ---------------------------------------------------------------------------
 # 1.  Clone sources
 # ---------------------------------------------------------------------------
-clone_if_needed "$SWIFT_DIR"          "https://github.com/apple/swift.git"           "release/6.2"
-clone_if_needed "$LLVM_APPLE_DIR"     "https://github.com/swiftlang/llvm-project.git" "swift/release/6.2"
+#clone_if_needed "$SWIFT_DIR"          "https://github.com/apple/swift.git"           "release/6.2"
+clone_if_needed "$SWIFT_DIR"          "https://github.com/georgik/swift.git"           "feature/xtensa"
+clone_if_needed "$LLVM_APPLE_DIR"     "https://github.com/georgik/swift-llvm-project.git" "feature/xtensa"
+#clone_if_needed "$LLVM_APPLE_DIR"     "https://github.com/swiftlang/llvm-project.git" "swift/release/6.2"
 clone_if_needed "$CMARK_DIR"          "https://github.com/apple/cmark.git"           "release/6.2"
 clone_if_needed "$SWIFT_SYNTAX_DIR"   "https://github.com/apple/swift-syntax.git"    "release/6.2"
 # clone_if_needed "$LLVM_XTENSA_DIR" "https://github.com/espressif/llvm-project.git" "esp_main"  # not needed for frontend
@@ -78,16 +80,16 @@ if [[ -f "$INSTALL_DIR/include/cmark_gfm/module.modulemap" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 3.  Build Apple LLVM (CAS patches)
+# 3.  Build Apple LLVM (with Xtensa support patches from Rust)
 # ---------------------------------------------------------------------------
-log "Building Apple LLVM + Clang (CAS patches)..."
+log "Building Apple LLVM + Clang with Xtensa experimental target..."
 mkdir -p "$BUILD_DIR/llvm-apple-macosx-arm64"
 cd "$BUILD_DIR/llvm-apple-macosx-arm64"
 run "cmake -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX='$INSTALL_DIR' \
-  -DLLVM_TARGETS_TO_BUILD='' \
-  -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD='' \
+  -DLLVM_TARGETS_TO_BUILD='AArch64' \
+  -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD='Xtensa' \
   -DLLVM_ENABLE_PROJECTS='clang;lld' \
   -DLLVM_ENABLE_MODULES=ON \
   -DLLVM_INCLUDE_TOOLS=ON \
@@ -124,6 +126,7 @@ run "cmake -G Ninja \
   -DSWIFT_BUILD_SDK_OVERLAY=OFF \
   -DSWIFT_BUILD_RUNTIME_WITH_HOST_COMPILER=ON \
   -DSWIFT_ENABLE_EXPERIMENTAL_EMBEDDED=ON \
+  -DSWIFT_STDLIB_SINGLE_THREADED=ON \
   -DSWIFT_ENABLE_EXPERIMENTAL_STRING_PROCESSING=OFF \
   -DSWIFT_ENABLE_EXPERIMENTAL_CONCURRENCY=OFF \
   -DSWIFT_ENABLE_EXPERIMENTAL_DISTRIBUTED=OFF \
