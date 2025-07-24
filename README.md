@@ -31,7 +31,22 @@ Note: for IR variant of experimental build, please check branch feature/llvm-ir
    - Build and install all components
    - Create a working Swift compiler at `./install/bin/swiftc`
 
-### 2. **Validate the Swift Compiler**:
+### 2. **Package the Toolchain** (Optional):
+   ```bash
+   ./package-toolchain.sh
+   ```
+   
+   Or with a specific version:
+   ```bash
+   ./package-toolchain.sh v1.0.0
+   ```
+   
+   This creates a distributable package in `packages/` directory that can be:
+   - Shared with other developers
+   - Installed on different machines
+   - Used by package managers like swiftly
+
+### 3. **Validate the Swift Compiler**:
    ```bash
    ./install/bin/swiftc --version
    ```
@@ -123,6 +138,56 @@ Swiftc for building:
 - **Missing swift-driver**: Warning about legacy driver is expected and safe to ignore
 - **ESP32-S3 flash fails**: Check ESP32-S3 connection and permissions for USB device
 - **Object file not found**: Ensure `swift-functions.o` is compiled and in correct location
+
+## Distribution and Packaging
+
+### Creating Distributable Packages
+
+The `package-toolchain.sh` script creates distributable packages that can be shared with other developers or used on different machines:
+
+```bash
+# Create package with auto-generated version
+./package-toolchain.sh
+
+# Create package with specific version
+./package-toolchain.sh v1.0.0
+
+# Create package in custom directory
+./package-toolchain.sh v1.0.0 /path/to/output
+```
+
+The package includes:
+- Complete Swift compiler with Xtensa support
+- All required libraries and headers
+- Installation script for system-wide deployment
+- Usage documentation and metadata
+- SHA256 checksum for integrity verification
+
+### Using Pre-built Packages
+
+To use a pre-built package (from GitHub Releases or CI artifacts):
+
+```bash
+# Download and extract
+tar -xzf swift-xtensa-toolchain-v1.0.0-macos-arm64.tar.gz
+cd swift-xtensa-toolchain-v1.0.0-macos-arm64
+
+# Verify the toolchain
+./bin/swiftc --version
+
+# Optional: Install system-wide
+sudo ./install.sh
+```
+
+### GitHub Actions Integration
+
+The project includes GitHub Actions workflow that:
+- Automatically builds the toolchain on pushes and tags
+- Creates distributable packages
+- Uploads build artifacts for easy download
+- Creates GitHub releases for tagged versions
+
+Artifacts are available for 90 days and can be downloaded from the Actions tab.
 
 ## Architecture
 

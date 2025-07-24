@@ -6,16 +6,116 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    
+    outputs:
+      package_version: ${{ steps.version.outputs.version }}
+      archive_name: ${{ steps.package.outputs.archive_name }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
           brew install cmake ninja python3
 
+      - name: Determine version
+        id: version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            COMMIT_SHORT=$(git rev-parse --short HEAD)
+            BRANCH=${GITHUB_REF#refs/heads/}
+            BRANCH_CLEAN=$(echo "$BRANCH" | tr '/' '-')
+            VERSION="${BRANCH_CLEAN}-${COMMIT_SHORT}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Generated version: $VERSION"
+
       - name: Build Swift with Xtensa support
         run: |
           chmod +x swift-xtensa-build.sh
           ./swift-xtensa-build.sh
+
+      - name: Verify build
+        run: |
+          echo "=== Verifying Swift Xtensa build ==="
+          ./install/bin/swiftc --version
+          ls -la install/bin/
+
+      - name: Package toolchain
+        id: package
+        run: |
+          chmod +x package-toolchain.sh
+          ./package-toolchain.sh "${{ steps.version.outputs.version }}"
+          
+          # Output the archive name for later steps
+          ARCHIVE_NAME="swift-xtensa-toolchain-${{ steps.version.outputs.version }}-macos-arm64"
+          echo "archive_name=$ARCHIVE_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.archive_name }}
+          path: |
+            packages/${{ steps.package.outputs.archive_name }}.tar.gz
+            packages/${{ steps.package.outputs.archive_name }}.tar.gz.sha256
+          retention-days: 90
+
+      - name: Upload latest build (for easy access)
+        uses: actions/upload-artifact@v4
+        with:
+          name: swift-xtensa-toolchain-latest
+          path: packages/${{ steps.package.outputs.archive_name }}.tar.gz
+          retention-days: 30
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.archive_name }}
+          path: ./artifacts
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./artifacts/*.tar.gz
+            ./artifacts/*.sha256
+          draft: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+          generate_release_notes: true
+          body: |
+            ## Swift Xtensa Toolchain Release
+            
+            This release contains a Swift compiler with Xtensa support for ESP32-S3 development.
+            
+            ### Installation
+            ```bash
+            # Download and extract
+            wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ needs.build.outputs.archive_name }}.tar.gz
+            tar -xzf ${{ needs.build.outputs.archive_name }}.tar.gz
+            cd ${{ needs.build.outputs.archive_name }}
+            
+            # Verify installation
+            ./bin/swiftc --version
+            
+            # Optional: Install system-wide
+            sudo ./install.sh
+            ```
+            
+            ### Verification
+            Verify the download integrity:
+            ```bash
+            shasum -a 256 -c ${{ needs.build.outputs.archive_name }}.tar.gz.sha256
+            ```
+            
+            For usage examples and ESP32-S3 integration, see the repository documentation.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
