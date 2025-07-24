@@ -56,7 +56,15 @@ Note: for IR variant of experimental build, please check branch feature/llvm-ir
    source ~/esp-idf/export.sh  # Adjust path to your ESP-IDF installation
    ```
 
-### 4. **Build and Flash the ESP-IDF Project**:
+### 4. **Try the ESP32-S3 Bare Metal Demo**:
+   ```bash
+   cd esp32-s3-swift-baremetal
+   make build
+   make flash
+   make monitor
+   ```
+
+### 5. **Build and Flash the ESP-IDF Project** (Alternative):
    ```bash
    cd swift-xtensa-validation/esp-idf-project
    idf.py set-target esp32s3
@@ -69,6 +77,7 @@ Note: for IR variant of experimental build, please check branch feature/llvm-ir
 ```
 swift-xtensa/
 ├── swift-xtensa-build.sh       # Main build script
+├── package-toolchain.sh        # Package toolchain for distribution
 ├── swift/                      # Swift compiler source (auto-cloned)
 ├── llvm-apple/                 # Apple LLVM with CAS patches (auto-cloned)
 ├── cmark/                      # CommonMark library (auto-cloned)
@@ -80,7 +89,15 @@ swift-xtensa/
 │       ├── swift-frontend     # Swift frontend
 │       ├── clang             # Clang compiler
 │       └── llvm-*            # LLVM tools
-└── swift-xtensa-validation/   # ESP32-S3 validation project
+├── packages/                   # Generated distribution packages
+├── esp32-s3-swift-baremetal/   # ESP32-S3 bare metal Swift demo
+│   ├── Sources/
+│   │   ├── Application/       # Swift application code
+│   │   ├── Registers/         # Hardware register definitions
+│   │   └── Support/           # C support and linker scripts
+│   ├── Tools/                 # Build tools and configurations
+│   └── Makefile              # Build system for ESP32-S3
+└── swift-xtensa-validation/   # ESP32-S3 validation project (ESP-IDF)
     └── esp-idf-project/       # ESP-IDF project for testing
 ```
 

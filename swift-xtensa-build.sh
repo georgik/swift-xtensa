@@ -105,9 +105,18 @@ mkdir -p "$INSTALL_DIR/include/llvm/Config"
 cp "$BUILD_DIR/llvm-apple-macosx-arm64/include/llvm/Config/config.h" "$INSTALL_DIR/include/llvm/Config/config.h"
 
 # ---------------------------------------------------------------------------
-# 4.  Build Swift host tools
+# 4.  Build Swift host tools with embedded support
 # ---------------------------------------------------------------------------
-log "Building Swift host tools (swift-frontend + swiftc)..."
+log "Building Swift host tools with embedded stdlib support..."
+
+# Source ESP-IDF environment for cross-compilation if available
+if [[ -f "$HOME/projects/esp-idf/export.sh" ]]; then
+  log "Sourcing ESP-IDF environment for cross-compilation support..."
+  source "$HOME/projects/esp-idf/export.sh"
+else
+  log "ESP-IDF not found at $HOME/projects/esp-idf/export.sh - proceeding without cross-compilation environment"
+fi
+
 mkdir -p "$BUILD_DIR/swift-macosx-arm64"
 cd "$BUILD_DIR/swift-macosx-arm64"
 run "cmake -G Ninja \
@@ -144,14 +153,31 @@ run "cmake -G Ninja \
   -DSWIFT_HOST_VARIANT=macosx \
   -DSWIFT_HOST_VARIANT_ARCH=arm64 \
   -DSWIFT_DARWIN_SUPPORTED_ARCHS=arm64 \
+  -DSWIFT_EMBEDDED_TARGETS='xtensa-none-none-elf' \
   '$SWIFT_DIR'"
 
+# Build just the Swift frontend - this is all we need for embedded Swift
+log "Building Swift frontend for embedded development..."
 run "ninja -j$(sysctl -n hw.ncpu) swift-frontend"
 
-# Install Swift tools manually since install targets may not be available
-log "Installing Swift tools..."
-cp "bin/swift-frontend" "$INSTALL_DIR/bin/"
-cp "bin/swiftc" "$INSTALL_DIR/bin/"
+# Manually install just the binaries we need
+log "Installing Swift compiler tools manually..."
+mkdir -p "$INSTALL_DIR/bin"
+if [[ -f "bin/swift-frontend" ]]; then
+  cp "bin/swift-frontend" "$INSTALL_DIR/bin/"
+  log "Installed swift-frontend"
+else
+  log "ERROR: swift-frontend binary not found!"
+  exit 1
+fi
+
+# Create swiftc wrapper script
+log "Creating swiftc wrapper script..."
+cat > "$INSTALL_DIR/bin/swiftc" << 'EOF'
+#!/bin/bash
+exec "$(dirname $0)/swift-frontend" "$@"
+EOF
+chmod +x "$INSTALL_DIR/bin/swiftc"
 
 # ---------------------------------------------------------------------------
 # 5.  Build Espressif LLVM (Xtensa) – optional, kept for future cross-linking
