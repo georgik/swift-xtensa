@@ -17,7 +17,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install cmake ninja python3
+          # cmake, ninja, and python3 are already available on GitHub Actions macOS runners
+          echo "Using pre-installed tools:"
+          cmake --version
+          ninja --version
+          python3 --version
 
       - name: Determine version
         id: version
