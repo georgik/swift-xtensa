@@ -99,7 +99,7 @@ cd "$BUILD_DIR/llvm-apple-macosx-arm64"
 run "cmake -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX='$INSTALL_DIR' \
-  -DLLVM_TARGETS_TO_BUILD='AArch64' \
+  -DLLVM_TARGETS_TO_BUILD='AArch64;RISCV' \
   -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD='Xtensa' \
   -DLLVM_ENABLE_PROJECTS='clang;lld' \
   -DLLVM_ENABLE_MODULES=ON \
@@ -151,11 +151,13 @@ run "cmake -G Ninja \
   -DSWIFT_PATH_TO_CMARK_SOURCE='$CMARK_DIR' \
   -DSWIFT_PATH_TO_CMARK_BUILD='$BUILD_DIR/cmark-macosx-arm64' \
   -DSWIFT_PATH_TO_SWIFT_SYNTAX_SOURCE='$SWIFT_SYNTAX_DIR' \
-  -DSWIFT_BUILD_SWIFT_SYNTAX=OFF \
+  -DSWIFT_BUILD_SWIFT_SYNTAX=ON \
   -DSWIFT_INCLUDE_TOOLS=ON \
-  -DSWIFT_SHOULD_BUILD_EMBEDDED_STDLIB=ON \
-  -DSWIFT_SHOULD_BUILD_EMBEDDED_STDLIB_CROSS_COMPILING=ON \
-  -DSWIFT_EMBEDDED_STDLIB_EXTRA_TARGET_TRIPLES='xtensa-esp32-none-elf;xtensa-esp32s2-none-elf;xtensa-esp32s3-none-elf;xtensa-esp32-espidf;xtensa-esp32s2-espidf;xtensa-esp32s3-espidf' \
+  -DSWIFT_ENABLE_SWIFT_IN_SWIFT=ON \
+  -DBOOTSTRAPPING_MODE=HOSTTOOLS \
+  -DSWIFT_SHOULD_BUILD_EMBEDDED_STDLIB=TRUE \
+  -DSWIFT_SHOULD_BUILD_EMBEDDED_STDLIB_CROSS_COMPILING=TRUE \
+  -DSWIFT_EMBEDDED_STDLIB_EXTRA_TARGET_TRIPLES='xtensa-esp32-none-elf;xtensa-esp32s2-none-elf;xtensa-esp32s3-none-elf;xtensa-esp32-espidf;xtensa-esp32s2-espidf;xtensa-esp32s3-espidf;riscv32-none-none-eabi' \
   -DSWIFT_BUILD_STDLIB=ON \
   -DSWIFT_BUILD_SDK_OVERLAY=OFF \
   -DSWIFT_BUILD_RUNTIME_WITH_HOST_COMPILER=ON \
@@ -177,21 +179,37 @@ run "cmake -G Ninja \
   -DSWIFT_HOST_VARIANT=macosx \
   -DSWIFT_HOST_VARIANT_ARCH=arm64 \
   -DSWIFT_DARWIN_SUPPORTED_ARCHS=arm64 \
-  -DSWIFT_EMBEDDED_TARGETS='xtensa-esp32-none-elf;xtensa-esp32s2-none-elf;xtensa-esp32s3-none-elf;xtensa-esp32-espidf;xtensa-esp32s2-espidf;xtensa-esp32s3-espidf' \
+  -DSWIFT_EMBEDDED_TARGETS='xtensa-esp32-none-elf;xtensa-esp32s2-none-elf;xtensa-esp32s3-none-elf;xtensa-esp32-espidf;xtensa-esp32s2-espidf;xtensa-esp32s3-espidf;riscv32-none-none-eabi' \
   '$SWIFT_DIR'"
 
 # Build the Swift frontend and embedded stdlib
 log "Building Swift frontend and embedded stdlib for Xtensa development..."
 run "ninja -j$(sysctl -n hw.ncpu) swift-frontend"
 
-# Build embedded stdlib if targets were generated
+# Build embedded stdlib and all libraries
+log "Building embedded stdlib and all Swift libraries..."
+run "ninja -j$(sysctl -n hw.ncpu) swift-stdlib-macosx-arm64"
+
+# Build embedded-libraries target if it exists
 log "Checking for embedded stdlib targets..."
-if ninja -t targets | grep -q "embedded-stdlib"; then
-  log "Building embedded stdlib for Xtensa targets..."
-  run "ninja -j$(sysctl -n hw.ncpu) embedded-stdlib"
+if ninja -t targets | grep -q "embedded-libraries"; then
+  log "Building embedded-libraries target..."
+  run "ninja -j$(sysctl -n hw.ncpu) embedded-libraries"
 else
-  log "Note: embedded stdlib targets not found - using module-only compilation"
+  log "embedded-libraries target not found - checking for individual embedded stdlib targets"
+  # Try to build individual embedded stdlib targets
+  for target in xtensa-esp32-none-elf xtensa-esp32s2-none-elf xtensa-esp32s3-none-elf xtensa-esp32-espidf xtensa-esp32s2-espidf xtensa-esp32s3-espidf riscv32-none-none-eabi; do
+    if ninja -t targets | grep -q "swift-stdlib.*$target"; then
+      log "Building embedded stdlib for $target..."
+      run "ninja -j$(sysctl -n hw.ncpu) swift-stdlib-$target" || true
+    fi
+  done
 fi
+
+# Install the Swift standard library and embedded libraries
+log "Installing Swift standard library..."
+run "ninja -j$(sysctl -n hw.ncpu) install-swift-stdlib" || log "install-swift-stdlib target not found"
+run "ninja -j$(sysctl -n hw.ncpu) install-embedded-libraries" || log "install-embedded-libraries target not found"
 
 # Manually install just the binaries we need
 log "Installing Swift compiler tools manually..."
