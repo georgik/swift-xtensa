@@ -155,7 +155,7 @@ run "cmake -G Ninja \
   -DSWIFT_INCLUDE_TOOLS=ON \
   -DSWIFT_SHOULD_BUILD_EMBEDDED_STDLIB=ON \
   -DSWIFT_SHOULD_BUILD_EMBEDDED_STDLIB_CROSS_COMPILING=ON \
-  -DSWIFT_EMBEDDED_STDLIB_EXTRA_TARGET_TRIPLES="xtensa-esp32-none-elf;xtensa-esp32s2-none-elf;xtensa-esp32s3-none-elf;xtensa-esp32-espidf;xtensa-esp32s2-espidf;xtensa-esp32s3-espidf" \
+  -DSWIFT_EMBEDDED_STDLIB_EXTRA_TARGET_TRIPLES='xtensa-esp32-none-elf;xtensa-esp32s2-none-elf;xtensa-esp32s3-none-elf;xtensa-esp32-espidf;xtensa-esp32s2-espidf;xtensa-esp32s3-espidf' \
   -DSWIFT_BUILD_STDLIB=ON \
   -DSWIFT_BUILD_SDK_OVERLAY=OFF \
   -DSWIFT_BUILD_RUNTIME_WITH_HOST_COMPILER=ON \
