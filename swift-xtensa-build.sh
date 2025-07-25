@@ -213,10 +213,6 @@ log "Installing Swift standard library..."
 run "ninja install-stdlib"
 run "ninja install-stdlib-experimental"
 
-# Try additional installation targets if they exist
-run "ninja -j$(sysctl -n hw.ncpu) install-swift-stdlib" || log "install-swift-stdlib target not found"
-run "ninja -j$(sysctl -n hw.ncpu) install-embedded-libraries" || log "install-embedded-libraries target not found"
-
 # Manually install just the binaries we need
 log "Installing Swift compiler tools manually..."
 mkdir -p "$INSTALL_DIR/bin"
