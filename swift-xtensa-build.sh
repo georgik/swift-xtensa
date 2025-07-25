@@ -12,10 +12,18 @@ run()  { log "Running: $*"; eval "$*"; }
 
 WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Check for clean build flag
+# Check for clean build flags
 if [[ "$1" == "--clean" ]]; then
   log "Clean build requested - removing existing build and install directories"
   rm -rf "$WORKSPACE_DIR/build" "$WORKSPACE_DIR/install"
+elif [[ "$1" == "--clean-swift" ]]; then
+  log "Clean Swift build requested - removing Swift build directory only"
+  rm -rf "$WORKSPACE_DIR/build/swift-macosx-arm64"
+  # Remove Swift binaries from install directory but keep LLVM
+  if [[ -d "$WORKSPACE_DIR/install/bin" ]]; then
+    rm -f "$WORKSPACE_DIR/install/bin/swift-frontend"
+    rm -f "$WORKSPACE_DIR/install/bin/swiftc"
+  fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -33,7 +41,9 @@ INSTALL_DIR="$WORKSPACE_DIR/install"
 echo "Setting up Swift with Xtensa support..."
 echo "Workspace directory: $WORKSPACE_DIR"
 echo "Install directory:  $INSTALL_DIR"
-echo "Usage: $0 [--clean] # Use --clean to remove previous build artifacts"
+echo "Usage: $0 [--clean|--clean-swift]"
+echo "  --clean       Remove all build artifacts (LLVM + Swift)"
+echo "  --clean-swift Remove only Swift build artifacts (keeps LLVM)"
 
 # ---------------------------------------------------------------------------
 # Helper: clone once
@@ -110,11 +120,22 @@ cp "$BUILD_DIR/llvm-apple-macosx-arm64/include/llvm/Config/config.h" "$INSTALL_D
 log "Building Swift host tools with embedded stdlib support..."
 
 # Source ESP-IDF environment for cross-compilation if available
-if [[ -f "$HOME/projects/esp-idf/export.sh" ]]; then
-  log "Sourcing ESP-IDF environment for cross-compilation support..."
-  source "$HOME/projects/esp-idf/export.sh"
+ESP_IDF_PATH="$HOME/projects/esp-idf"
+if [[ -f "$ESP_IDF_PATH/export.sh" ]]; then
+  log "Sourcing ESP-IDF environment for ESP32-S3 cross-compilation support..."
+  export IDF_PATH="$ESP_IDF_PATH"
+  source "$ESP_IDF_PATH/export.sh" > /dev/null 2>&1
+  
+  # Verify ESP-IDF toolchain is available
+  if command -v xtensa-esp32s3-elf-gcc >/dev/null 2>&1; then
+    log "ESP32-S3 Xtensa toolchain found: $(xtensa-esp32s3-elf-gcc --version | head -1)"
+    export XTENSA_TOOLCHAIN_PREFIX="xtensa-esp32s3-elf-"
+    export XTENSA_SYSROOT="$(dirname $(which xtensa-esp32s3-elf-gcc))/../xtensa-esp32s3-elf"
+  else
+    log "Warning: ESP32-S3 toolchain not found after sourcing ESP-IDF"
+  fi
 else
-  log "ESP-IDF not found at $HOME/projects/esp-idf/export.sh - proceeding without cross-compilation environment"
+  log "ESP-IDF not found at $ESP_IDF_PATH/export.sh - proceeding without cross-compilation environment"
 fi
 
 mkdir -p "$BUILD_DIR/swift-macosx-arm64"
@@ -132,7 +153,10 @@ run "cmake -G Ninja \
   -DSWIFT_PATH_TO_SWIFT_SYNTAX_SOURCE='$SWIFT_SYNTAX_DIR' \
   -DSWIFT_BUILD_SWIFT_SYNTAX=OFF \
   -DSWIFT_INCLUDE_TOOLS=ON \
-  -DSWIFT_BUILD_STDLIB=OFF \
+  -DSWIFT_SHOULD_BUILD_EMBEDDED_STDLIB=ON \
+  -DSWIFT_SHOULD_BUILD_EMBEDDED_STDLIB_CROSS_COMPILING=ON \
+  -DSWIFT_EMBEDDED_STDLIB_EXTRA_TARGET_TRIPLES="xtensa-esp32-none-elf;xtensa-esp32s2-none-elf;xtensa-esp32s3-none-elf;xtensa-esp32-espidf;xtensa-esp32s2-espidf;xtensa-esp32s3-espidf" \
+  -DSWIFT_BUILD_STDLIB=ON \
   -DSWIFT_BUILD_SDK_OVERLAY=OFF \
   -DSWIFT_BUILD_RUNTIME_WITH_HOST_COMPILER=ON \
   -DSWIFT_ENABLE_EXPERIMENTAL_EMBEDDED=ON \
@@ -153,12 +177,21 @@ run "cmake -G Ninja \
   -DSWIFT_HOST_VARIANT=macosx \
   -DSWIFT_HOST_VARIANT_ARCH=arm64 \
   -DSWIFT_DARWIN_SUPPORTED_ARCHS=arm64 \
-  -DSWIFT_EMBEDDED_TARGETS='xtensa-none-none-elf' \
+  -DSWIFT_EMBEDDED_TARGETS='xtensa-esp32-none-elf;xtensa-esp32s2-none-elf;xtensa-esp32s3-none-elf;xtensa-esp32-espidf;xtensa-esp32s2-espidf;xtensa-esp32s3-espidf' \
   '$SWIFT_DIR'"
 
-# Build just the Swift frontend - this is all we need for embedded Swift
-log "Building Swift frontend for embedded development..."
+# Build the Swift frontend and embedded stdlib
+log "Building Swift frontend and embedded stdlib for Xtensa development..."
 run "ninja -j$(sysctl -n hw.ncpu) swift-frontend"
+
+# Build embedded stdlib if targets were generated
+log "Checking for embedded stdlib targets..."
+if ninja -t targets | grep -q "embedded-stdlib"; then
+  log "Building embedded stdlib for Xtensa targets..."
+  run "ninja -j$(sysctl -n hw.ncpu) embedded-stdlib"
+else
+  log "Note: embedded stdlib targets not found - using module-only compilation"
+fi
 
 # Manually install just the binaries we need
 log "Installing Swift compiler tools manually..."

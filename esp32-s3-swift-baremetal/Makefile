@@ -8,7 +8,8 @@ LINKERSCRIPT_DIR := $(REPOROOT)/esp32-s3-swift-baremetal/Sources/Support
 
 # Flags - ESP32-S3 uses Xtensa architecture
 ARCH             := xtensa
-TARGET           := $(ARCH)-none-none-elf
+VENDOR           := esp32s3
+TARGET           := $(ARCH)-$(VENDOR)-none-elf
 BUILDDIR         := .build/$(TARGET)
 APP_BINARY       := $(BUILDDIR)/Application
 FLASH_BAUD       := 460800

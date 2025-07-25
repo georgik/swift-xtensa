@@ -206,6 +206,39 @@ The project includes GitHub Actions workflow that:
 
 Artifacts are available for 90 days and can be downloaded from the Actions tab.
 
+## Target Triple Standard
+
+**IMPORTANT**: This project supports 6 standardized LLVM target triples for ESP32 variants, following the same convention as Rust:
+
+### Bare Metal Targets (ELF format)
+```
+xtensa-esp32-none-elf      # ESP32 bare metal
+xtensa-esp32s2-none-elf    # ESP32-S2 bare metal
+xtensa-esp32s3-none-elf    # ESP32-S3 bare metal
+```
+
+### ESP-IDF Framework Targets
+```
+xtensa-esp32-espidf        # ESP32 with ESP-IDF
+xtensa-esp32s2-espidf      # ESP32-S2 with ESP-IDF
+xtensa-esp32s3-espidf      # ESP32-S3 with ESP-IDF
+```
+
+### Target Triple Format
+Where:
+- **Architecture**: `xtensa` - Recognized by LLVM and Swift as the Xtensa architecture
+- **Vendor**: `esp32`/`esp32s2`/`esp32s3` - Specific chip variant identifier
+- **OS**: `none` - Bare metal (no operating system)
+- **Environment**: `elf` - ELF object file format, or `espidf` - ESP-IDF framework environment
+
+This format is used consistently across:
+- **LLVM**: Recognizes `xtensa` as experimental target architecture with ESP32 variants
+- **Swift**: Embedded stdlib support for all 6 target triples
+- **Applications**: Example projects can target appropriate variant
+- **Build Scripts**: Configured to generate Swift stdlib for all supported targets
+
+**Note**: These target triples exactly match the Rust toolchain convention for ESP32 development, ensuring consistency across language ecosystems. Do not use simplified forms like `esp32s3-none-elf` as they won't be recognized by LLVM's architecture parsing.
+
 ## Architecture
 
 This project uses a two-stage compilation approach:
