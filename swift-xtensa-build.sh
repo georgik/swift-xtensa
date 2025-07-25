@@ -210,6 +210,10 @@ fi
 
 # Install the Swift standard library and embedded libraries
 log "Installing Swift standard library..."
+run "ninja install-stdlib"
+run "ninja install-stdlib-experimental"
+
+# Try additional installation targets if they exist
 run "ninja -j$(sysctl -n hw.ncpu) install-swift-stdlib" || log "install-swift-stdlib target not found"
 run "ninja -j$(sysctl -n hw.ncpu) install-embedded-libraries" || log "install-embedded-libraries target not found"
 
@@ -253,6 +257,21 @@ chmod +x "$INSTALL_DIR/bin/swiftc"
 log "Testing Swift compiler..."
 "$INSTALL_DIR/bin/swiftc" --version
 
+# Verify embedded Swift support
+log "Verifying embedded Swift support..."
+if echo 'print("Hello, embedded Swift!")' | "$INSTALL_DIR/bin/swiftc" -enable-experimental-feature Embedded - 2>/dev/null; then
+  log "✅ Embedded Swift support is working!"
+else
+  log "⚠️  Embedded Swift support test failed - may need additional configuration"
+  log "Error details:"
+  echo 'print("Hello, embedded Swift!")' | "$INSTALL_DIR/bin/swiftc" -enable-experimental-feature Embedded - 2>&1 || true
+fi
+
+# Check what libraries were installed
+log "Installed Swift libraries:"
+find "$INSTALL_DIR/lib/swift" -name "*.dylib" -o -name "*.a" -o -name "*Embedded*" 2>/dev/null | head -10 || log "No Swift libraries found"
+
 log "✅ Swift with Xtensa support is ready!"
 log "📍 Tools available at: $INSTALL_DIR/bin/"
 log "🚀 Use: $INSTALL_DIR/bin/swiftc to compile Swift code"
+log "📚 Standard library installed at: $INSTALL_DIR/lib/swift/"
