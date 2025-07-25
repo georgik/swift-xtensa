@@ -2,6 +2,8 @@
 
 This project demonstrates building and running Swift on the ESP32-S3 using the Xtensa toolchain. It provides a comprehensive build script to compile a Swift compiler with Xtensa support for ESP32-S3 development with ESP-IDF.
 
+This project includes **Embedded Swift Standard Library** support with cross-compilation for multiple ESP32 variants and RISC-V targets.
+
 Note: for IR variant of experimental build, please check branch feature/llvm-ir
 
 ## Prerequisites
@@ -50,6 +52,14 @@ Note: for IR variant of experimental build, please check branch feature/llvm-ir
    ```bash
    ./install/bin/swiftc --version
    ```
+   
+   **Test Embedded Swift compilation**:
+   ```bash
+   # Test simple embedded Swift program
+   cd esp32-s3-swift-baremetal
+   echo 'print("Hello, Embedded Swift!")' > test_embedded.swift
+   ../install/bin/swiftc -target xtensa-esp32s3-none-elf -enable-experimental-feature Embedded test_embedded.swift
+   ```
 
 ### 3. **Set Up ESP-IDF Environment** (for cross-compilation):
    ```bash
@@ -91,12 +101,14 @@ swift-xtensa/
 │       └── llvm-*            # LLVM tools
 ├── packages/                   # Generated distribution packages
 ├── esp32-s3-swift-baremetal/   # ESP32-S3 bare metal Swift demo
+│   ├── Package.swift          # Swift Package Manager configuration
 │   ├── Sources/
-│   │   ├── Application/       # Swift application code
-│   │   ├── Registers/         # Hardware register definitions
+│   │   ├── Application/       # Swift application code (with embedded stdlib)
+│   │   ├── Registers/         # Hardware register definitions (MMIO-based)
 │   │   └── Support/           # C support and linker scripts
 │   ├── Tools/                 # Build tools and configurations
-│   └── Makefile              # Build system for ESP32-S3
+│   ├── Makefile              # Build system for ESP32-S3
+│   └── test_embedded.swift   # Simple embedded Swift test
 └── swift-xtensa-validation/   # ESP32-S3 validation project (ESP-IDF)
     └── esp-idf-project/       # ESP-IDF project for testing
 ```
@@ -105,31 +117,60 @@ swift-xtensa/
 
 - **`swift-xtensa-build.sh`**: Single comprehensive build script that handles all dependencies
 - **Apple LLVM**: Uses Swift's official LLVM fork with CAS (Content Addressable Storage) patches
-- **Swift Frontend**: Host-only Swift compiler without standard library
+- **Swift Frontend**: Host Swift compiler with **Embedded Standard Library** support
+- **Embedded Standard Library**: Cross-compiled Swift standard library for embedded targets
 - **ESP-IDF Integration**: Cross-compilation support for ESP32-S3 Xtensa targets
+- **Swift Package Manager**: Full SwiftPM support with embedded target configuration
 
-## Swift Functions
-`swift-functions.swift` contains simple Swift functions for addition, multiplication, and Fibonacci calculation, intended to demonstrate execution on the ESP32-S3.
+## Embedded Swift Features
+
+The project now includes comprehensive **Embedded Swift** support:
+
+- **Swift Package Manager Integration**: Full SwiftPM support with `Package.swift` configuration
+- **MMIO Support**: Hardware register access using Apple's `swift-mmio` package
+- **Bare Metal Runtime**: Custom runtime functions for embedded environment
+- **Cross-compiled Standard Library**: Embedded stdlib built for all supported targets
+- **Memory Management**: Custom allocators suitable for embedded systems
+- **Advanced GPIO Control**: Direct hardware register manipulation with type safety
 
 ## Expected Output
 
 When successfully flashed and running on ESP32-S3, you should see:
 
 ```
-I (265) SWIFT: === Swift on ESP32-S3 Validation ===
-I (265) SWIFT: Swift add: 7 + 8 = 15
-I (265) SWIFT: Swift multiply: 4 * 6 = 24
-I (275) SWIFT: Swift fibonacci(10) = 55
-I (275) SWIFT: ✅ All Swift computations passed!
-I (285) SWIFT: Swift code running on ESP32-S3!
+=== ESP32-S3 Swift Bare Metal Demo ===
+Architecture: Xtensa LX7
+Compiler: Swift with Xtensa Support
+
+Disabling watchdog timers...
+Watchdogs disabled.
+Initializing LED on GPIO48...
+LED initialized.
+=== Testing Swift Arithmetic on ESP32-S3 ===
+15 + 25 = 40
+15 * 25 = 375
+Fibonacci(10) = 55
+✅ All arithmetic tests PASSED!
+
+🎉 Swift running successfully on ESP32-S3!
+All tests completed. Starting LED blink loop...
+
+Cycle 0 - LED ON
+Cycle 0 - LED OFF
+Cycle 1 - LED ON
+...
 ```
 
 ## Build Details
 
 The build process creates:
 1. **cmark**: CommonMark library for Swift documentation
-2. **LLVM + Clang**: Apple's LLVM fork with CAS (Content Addressable Storage) patches
-3. **Swift Frontend**: Host-only Swift compiler (no standard library)
+2. **LLVM + Clang**: Apple's LLVM fork with Xtensa experimental target support
+3. **Swift Frontend**: Host Swift compiler with embedded stdlib support
+4. **Embedded Standard Library**: Cross-compiled Swift stdlib for 7 target triples:
+   - 3 ESP32 variants (ESP32, ESP32-S2, ESP32-S3) for bare metal
+   - 3 ESP32 variants for ESP-IDF framework
+   - 1 RISC-V 32-bit target for additional embedded support
 
 Swiftc for building:
 - Apple Swift version 6.2-dev (LLVM 4197ac1672a278c, Swift acbdfef4f4d71b1)
@@ -139,8 +180,17 @@ Swiftc for building:
 ### Build Configuration
 - **CAS Support**: Disabled (`-DSWIFT_ENABLE_CAS=OFF`)
 - **Swift Syntax**: Disabled to avoid C++ interoperability issues
-- **Standard Library**: Disabled for minimal build
-- **Target**: Host architecture only (arm64-apple-macosx13.0)
+- **Embedded Standard Library**: **ENABLED** with cross-compilation support
+- **Supported Embedded Targets**: 
+  - `xtensa-esp32-none-elf` (ESP32 bare metal)
+  - `xtensa-esp32s2-none-elf` (ESP32-S2 bare metal)
+  - `xtensa-esp32s3-none-elf` (ESP32-S3 bare metal)
+  - `xtensa-esp32-espidf` (ESP32 with ESP-IDF)
+  - `xtensa-esp32s2-espidf` (ESP32-S2 with ESP-IDF)
+  - `xtensa-esp32s3-espidf` (ESP32-S3 with ESP-IDF)
+  - `riscv32-none-none-eabi` (RISC-V 32-bit bare metal)
+- **Host Target**: arm64-apple-macosx15.0
+- **Experimental Features**: Embedded Swift enabled
 
 ## Troubleshooting
 
@@ -208,13 +258,14 @@ Artifacts are available for 90 days and can be downloaded from the Actions tab.
 
 ## Target Triple Standard
 
-**IMPORTANT**: This project supports 6 standardized LLVM target triples for ESP32 variants, following the same convention as Rust:
+**IMPORTANT**: This project supports **7 standardized LLVM target triples** for embedded development, following the same convention as Rust:
 
 ### Bare Metal Targets (ELF format)
 ```
 xtensa-esp32-none-elf      # ESP32 bare metal
 xtensa-esp32s2-none-elf    # ESP32-S2 bare metal
 xtensa-esp32s3-none-elf    # ESP32-S3 bare metal
+riscv32-none-none-eabi     # RISC-V 32-bit bare metal (NEW)
 ```
 
 ### ESP-IDF Framework Targets
@@ -232,12 +283,13 @@ Where:
 - **Environment**: `elf` - ELF object file format, or `espidf` - ESP-IDF framework environment
 
 This format is used consistently across:
-- **LLVM**: Recognizes `xtensa` as experimental target architecture with ESP32 variants
-- **Swift**: Embedded stdlib support for all 6 target triples
+- **LLVM**: Recognizes `xtensa` and `riscv32` as experimental target architectures
+- **Swift**: Embedded stdlib support for all **7 target triples**
 - **Applications**: Example projects can target appropriate variant
 - **Build Scripts**: Configured to generate Swift stdlib for all supported targets
+- **Swift Package Manager**: Native support for embedded target configuration
 
-**Note**: These target triples exactly match the Rust toolchain convention for ESP32 development, ensuring consistency across language ecosystems. Do not use simplified forms like `esp32s3-none-elf` as they won't be recognized by LLVM's architecture parsing.
+**Note**: These target triples exactly match the Rust toolchain convention for embedded development, ensuring consistency across language ecosystems. Do not use simplified forms like `esp32s3-none-elf` as they won't be recognized by LLVM's architecture parsing.
 
 ## Architecture
 
@@ -247,10 +299,13 @@ This project uses a two-stage compilation approach:
 3. **Assembly → Object**: LLVM assembler creates object files
 4. **Object → ESP32 Binary**: ESP-IDF links with Swift object files
 
-## Limitations
+## New Features & Improvements
 
-- **Basic Swift support only**: No Swift standard library
-- **Simple data types**: Integers and basic arithmetic operations
-- **Manual compilation**: Requires custom build process
-- **Debugging limited**: Standard Swift debugging tools not available
+
+## Current Limitations
+
+- **Debugging**: Limited debugging support (no LLDB integration yet)
+- **Concurrency**: No async/await or Actor support in embedded mode
+- **Reflection**: Reflection APIs disabled for embedded targets
+- **Platform Dependencies**: Some Swift features disabled for embedded compatibility
 
