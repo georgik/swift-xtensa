@@ -53,7 +53,7 @@ clone_if_needed() {
 # 1. Clone sources
 # ---------------------------------------------------------------------------
 clone_if_needed "$SWIFT_DIR"          "https://github.com/georgik/swift.git"           "feature/xtensa"
-clone_if_needed "$LLVM_DIR"     "https://github.com/georgik/swiftlang-llvm-project.git" "feature/xtensa"
+clone_if_needed "$LLVM_DIR"     "https://github.com/georgik/swiftlang-llvm-project.git" "feature/xtensa-2025-08"
 clone_if_needed "$CMARK_DIR"          "https://github.com/apple/cmark.git"           "release/6.2"
 clone_if_needed "$SWIFT_SYNTAX_DIR"   "https://github.com/apple/swift-syntax.git"    "release/6.2"
 
@@ -109,7 +109,7 @@ run "./utils/build-script \
   --skip-test-cmark \
   --install-swift \
   --install-llvm \
-  --llvm-cmake-options='-DLLVM_ENABLE_PROJECTS=clang;lld -DLLVM_ENABLE_MODULES=ON -DLLVM_INCLUDE_TOOLS=ON -DLLVM_INSTALL_UTILS=ON -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=Xtensa' \
+  --llvm-cmake-options='-DLLVM_ENABLE_PROJECTS=clang;lld -DLLVM_ENABLE_MODULES=ON -DLLVM_INCLUDE_TOOLS=ON -DLLVM_INSTALL_UTILS=ON -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=Xtensa -DCOMPILER_RT_FORCE_BUILD_BAREMETAL_MACHO_BUILTINS_ARCHS=""' \
   --swift-cmake-options='-DSWIFT_ENABLE_EXPERIMENTAL_EMBEDDED=ON -DSWIFT_STDLIB_SINGLE_THREADED=ON -DSWIFT_SHOULD_BUILD_EMBEDDED_STDLIB=TRUE -DSWIFT_SHOULD_BUILD_EMBEDDED_STDLIB_CROSS_COMPILING=TRUE -DSWIFT_EMBEDDED_STDLIB_EXTRA_TARGET_TRIPLES=xtensa-esp32-none-elf;xtensa-esp32s2-none-elf;xtensa-esp32s3-none-elf;xtensa-esp32-espidf;xtensa-esp32s2-espidf;xtensa-esp32s3-espidf;riscv32-none-none-eabi -DSWIFT_EMBEDDED_TARGETS=xtensa-esp32-none-elf;xtensa-esp32s2-none-elf;xtensa-esp32s3-none-elf;xtensa-esp32-espidf;xtensa-esp32s2-espidf;xtensa-esp32s3-espidf;riscv32-none-none-eabi -DSWIFT_ENABLE_EXPERIMENTAL_STRING_PROCESSING=OFF -DSWIFT_ENABLE_EXPERIMENTAL_CONCURRENCY=OFF -DSWIFT_ENABLE_EXPERIMENTAL_DISTRIBUTED=OFF -DSWIFT_ENABLE_EXPERIMENTAL_DIFFERENTIABLE_PROGRAMMING=OFF -DSWIFT_ENABLE_BACKTRACING=OFF -DSWIFT_ENABLE_REFLECTION=OFF -DSWIFT_BUILD_REMOTE_MIRROR=OFF -DSWIFT_ENABLE_RUNTIME_FUNCTION_COUNTERS=OFF -DSWIFT_ENABLE_LLDB=OFF -DSWIFT_ENABLE_LLD=OFF -DSWIFT_ENABLE_DISPATCH=OFF -DSWIFT_ENABLE_LIBXML2=OFF -DSWIFT_ENABLE_EXPERIMENTAL_CXX_INTEROP=OFF -DSWIFT_ENABLE_CAS=OFF'"
 
 # ---------------------------------------------------------------------------
