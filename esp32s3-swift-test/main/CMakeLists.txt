@@ -69,7 +69,7 @@ enable_language(Swift)
 # List of Swift source files to build.
 target_sources(${COMPONENT_LIB}
     PRIVATE
-    SwiftMain.swift
+    Main.swift
 )
 
 add_custom_command(
@@ -80,7 +80,7 @@ add_custom_command(
 )
 
 message(STATUS "Swift integration: Using Embedded Swift with bridging header")
-message(STATUS "Swift sources: SwiftMain.swift")
+message(STATUS "Swift sources: Main.swift")
 message(STATUS "Bridging header: BridgingHeader.h")
 
 # Add linker script fragment for Swift sections
